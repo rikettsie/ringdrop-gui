@@ -25,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # git-cliff needs full history
 
       - name: Install system deps (Linux)
         if: matrix.platform == 'linux'
@@ -50,13 +52,19 @@ jobs:
       - name: Install frontend deps
         run: npm ci
 
+      - name: Generate release notes
+        uses: orhun/git-cliff-action@v3
+        id: cliff
+        with:
+          config: cliff.toml
+          args: --current --strip header
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "ringdrop ${{ github.ref_name }}"
-          releaseBody: |
-            See [CHANGELOG.md](./CHANGELOG.md) for details.
+          releaseBody: ${{ steps.cliff.outputs.content }}
           releaseDraft: true
           prerelease: false

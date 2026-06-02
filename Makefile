@@ -17,8 +17,10 @@ endif
 	sed -i 's/^version = ".*"/version = "$(VERSION)"/' src-tauri/Cargo.toml
 	@echo "Updating Cargo.lock…"
 	cd src-tauri && cargo update --workspace --quiet
+	@echo "Generating CHANGELOG.md…"
+	git cliff --tag v$(VERSION) -o CHANGELOG.md
 	@echo "Staging changes…"
-	git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+	git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock CHANGELOG.md
 	git commit -m "chore: release v$(VERSION)"
 	@echo "Tagging v$(VERSION)…"
 	git tag -a v$(VERSION) -m "v$(VERSION)"

@@ -9,7 +9,83 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+          cache: "npm"
+
+      - run: npm ci
+
+      - run: npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: cargo fmt --check
+        working-directory: src-tauri
+
+      - run: cargo clippy --all-features -- -D warnings
+        working-directory: src-tauri
+
+  create-release:
+    needs: [test, lint]
+    runs-on: ubuntu-22.04
+    outputs:
+      release_id: ${{ steps.create.outputs.release_id }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Generate release notes
+        id: cliff
+        run: |
+          git-cliff --config cliff.toml --current --strip header --output cliff_notes.md
+          echo "changelog=cliff_notes.md" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        id: create
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "ringdrop ${{ github.ref_name }}" \
+            --notes-file cliff_notes.md \
+            --verify-tag
+          release_id=$(gh api "repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" --jq '.id')
+          echo "release_id=$release_id" >> $GITHUB_OUTPUT
+
   build:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
@@ -25,8 +101,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # git-cliff needs full history
 
       - name: Install system deps (Linux)
         if: matrix.platform == 'linux'
@@ -52,19 +126,8 @@ jobs:
       - name: Install frontend deps
         run: npm ci
 
-      - name: Generate release notes
-        uses: orhun/git-cliff-action@v3
-        id: cliff
-        with:
-          config: cliff.toml
-          args: --current --strip header
-
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "ringdrop ${{ github.ref_name }}"
-          releaseBody: ${{ steps.cliff.outputs.content }}
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.create-release.outputs.release_id }}

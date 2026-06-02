@@ -27,7 +27,13 @@
 {:else}
   <!-- display:contents removes this span from the layout flow so callers don't
        need to wire a trigger themselves — any click on the child enters confirm mode. -->
-  <span onclick={() => (confirming = true)} style="display:contents">
+  <span
+    role="button"
+    tabindex="0"
+    onclick={() => (confirming = true)}
+    onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); confirming = true; } }}
+    style="display:contents"
+  >
     {@render children()}
   </span>
 {/if}

@@ -1,6 +1,12 @@
 FNM := $(HOME)/.local/share/fnm/fnm
 
-.PHONY: release
+.PHONY: release hooks
+
+# Activate git hooks from .githooks/.
+# Run once after cloning: make hooks
+hooks:
+	git config core.hooksPath .githooks
+	@echo "Git hooks activated."
 
 # Bump the version, commit, tag, and push.
 # Usage: make release VERSION=1.2.3

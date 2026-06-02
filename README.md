@@ -56,6 +56,7 @@ configuration; no embedded node.
 
 ```sh
 npm install
+make hooks      # activate git hooks (once, after cloning)
 npm run tauri dev
 ```
 

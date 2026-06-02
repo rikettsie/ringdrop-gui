@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+echo "► cargo fmt --check"
+(cd src-tauri && cargo fmt --check)
+
+echo "► cargo clippy"
+(cd src-tauri && cargo clippy --all-targets -- -D warnings)
+
+echo "► npm run check"
+FNM="$HOME/.local/share/fnm/fnm"
+if [ -x "$FNM" ]; then eval "$($FNM env --shell bash)"; fi
+npm run check

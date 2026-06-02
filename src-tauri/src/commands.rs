@@ -100,13 +100,21 @@ pub async fn daemon_status(state: State<'_, AppState>) -> Result<DaemonStatus, S
         None => false,
         Some(c) => c.is_running().await,
     };
-    Ok(DaemonStatus { running, port: state.port })
+    Ok(DaemonStatus {
+        running,
+        port: state.port,
+    })
 }
 
 /// Lists all blobs in the local store.
 #[tauri::command]
 pub async fn blob_list(state: State<'_, AppState>) -> Result<Vec<BlobRow>, String> {
-    state.query(Op::BlobList { peer: None, rings: None }).await
+    state
+        .query(Op::BlobList {
+            peer: None,
+            rings: None,
+        })
+        .await
 }
 
 /// Imports a file or directory into the local store.
@@ -126,7 +134,11 @@ pub async fn blob_import(
     rings: Vec<String>,
 ) -> Result<ImportResult, String> {
     let results: Vec<ImportResult> = state
-        .query(Op::Import { path: PathBuf::from(path), rings, open: false })
+        .query(Op::Import {
+            path: PathBuf::from(path),
+            rings,
+            open: false,
+        })
         .await?;
     results
         .into_iter()
@@ -328,7 +340,9 @@ mod tests {
     #[test]
     fn collect_records_skips_non_record_events() {
         let rows: Vec<BlobRow> = collect_records(vec![
-            EventKind::Line { text: "2 blobs:".into() },
+            EventKind::Line {
+                text: "2 blobs:".into(),
+            },
             rec(json!({"hash":"abc","name":"f.txt","rings":[],"ticket":"rdrop://x"})),
             EventKind::Done,
         ]);
@@ -337,8 +351,10 @@ mod tests {
 
     #[test]
     fn collect_records_ignores_progress_events() {
-        let rows: Vec<BlobRow> =
-            collect_records(vec![EventKind::Progress { done: 512, total: 1024 }]);
+        let rows: Vec<BlobRow> = collect_records(vec![EventKind::Progress {
+            done: 512,
+            total: 1024,
+        }]);
         assert!(rows.is_empty());
     }
 
@@ -371,8 +387,9 @@ mod tests {
 
     #[test]
     fn collect_records_deserializes_grant_rows() {
-        let rows: Vec<GrantRow> =
-            collect_records(vec![rec(json!({"privilege": "blob-list", "peer_id": "abc"}))]);
+        let rows: Vec<GrantRow> = collect_records(vec![rec(
+            json!({"privilege": "blob-list", "peer_id": "abc"}),
+        )]);
         assert_eq!(rows[0].privilege, "blob-list");
     }
 
@@ -387,7 +404,9 @@ mod tests {
     #[test]
     fn collect_records_returns_empty_for_no_records() {
         let rows: Vec<BlobRow> = collect_records(vec![
-            EventKind::Line { text: "No blobs.".into() },
+            EventKind::Line {
+                text: "No blobs.".into(),
+            },
             EventKind::Done,
         ]);
         assert!(rows.is_empty());

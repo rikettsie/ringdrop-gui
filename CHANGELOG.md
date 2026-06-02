@@ -1,0 +1,41 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.1.12] - 2026-06-02
+
+### Bug Fixes
+
+- Run svelte-kit sync before test and docs:build in CI
+- Grant contents:write permission to release workflow
+- Remove hardcoded version from tauri.conf.json, use Cargo.toml
+- Remove stale directive and apply role to button
+
+### Documentation
+
+- Add README with architecture diagram and prerequisites
+- Scaffold VitePress site with GitHub Pages deployment
+- Add docs section to README, fix Node version to 24
+- Use standard blue color for MIT license badge
+- Rename Release badge to Installers
+- Replace ASCII art diagram with Mermaid
+- Fix typo in ringdrop Github repo
+
+### Features
+
+- Wire DaemonClient into app state via ringdrop 0.11.1
+- Add DaemonBadge with Tailwind and polling daemon_status command
+- Add blob_list, blob_import, blob_remove commands and BlobTable UI
+- Add receive command with live progress bar via transfer_progress event
+- Add IdPanel with peer-id display, copy, and amber QR code
+- Add ring management panel with list, create, members, add/remove peer
+- Add peer address book panel with add and remove
+- Add grant management panel with grant and revoke
+- Add remote catalog browser and grant/peer/remote panels — M1 complete
+- Add changelog generation via git-cliff
+
+### Refactoring
+
+- Deduplicate types, extract query/execute helpers, add CI
+
+

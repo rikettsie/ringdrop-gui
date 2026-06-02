@@ -5072,6 +5072,7 @@ dependencies = [
 [[package]]
 name = "ringdrop"
 version = "0.12.0"
+source = "git+https://github.com/rikettsie/ringdrop?branch=feat%2Fadd-structured-text-in-IPC#6bbc392bf167cc7fcc136703544cf3946c41c9c6"
 dependencies = [
  "anyhow",
  "bao-tree",

@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 use ringdrop::daemon::protocol::{EventKind, Op};
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{AppHandle, Emitter, State};
 
 use crate::state::AppState;
 
@@ -148,6 +148,41 @@ pub async fn blob_remove(state: State<'_, AppState>, target: String) -> Result<(
         .map_err(|e| e.to_string())
 }
 
+/// Downloads the blob described by `ticket` into the directory `dest`.
+///
+/// Progress is streamed to the frontend as `"transfer_progress"` events with
+/// payload `{ done: u64, total: u64 }`. The frontend should call
+/// `listen("transfer_progress", …)` before invoking this command.
+///
+/// `dest` must be an absolute path to an existing directory.
+#[tauri::command]
+pub async fn receive(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    ticket: String,
+    dest: String,
+) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(
+            Op::Receive {
+                ticket,
+                dest: PathBuf::from(dest),
+                force_overwrite: false,
+            },
+            move |event| {
+                if let EventKind::Progress { done, total } = event.kind {
+                    let _ = app.emit(
+                        "transfer_progress",
+                        serde_json::json!({ "done": done, "total": total }),
+                    );
+                }
+            },
+        )
+        .await
+        .map_err(|e| e.to_string())
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -206,6 +241,19 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].format, "raw");
         assert_eq!(results[0].ticket, "rdrop://aabbcc");
+    }
+
+    #[test]
+    fn collect_records_ignores_progress_events() {
+        // Progress events are handled separately (streamed via AppHandle::emit);
+        // they must never end up in the record collector.
+        let events = vec![
+            EventKind::Progress { done: 512, total: 1024 },
+            EventKind::Progress { done: 1024, total: 1024 },
+            EventKind::Done,
+        ];
+        let rows: Vec<BlobRow> = collect_records(events);
+        assert!(rows.is_empty());
     }
 
     #[test]

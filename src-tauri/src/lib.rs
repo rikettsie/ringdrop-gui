@@ -15,6 +15,7 @@ pub fn run() {
             commands::blob_list,
             commands::blob_import,
             commands::blob_remove,
+            commands::receive,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

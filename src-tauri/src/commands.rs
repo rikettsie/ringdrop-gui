@@ -278,6 +278,59 @@ pub async fn peer_remove(state: State<'_, AppState>, peer: String) -> Result<(),
         .map_err(|e| e.to_string())
 }
 
+/// One catalog-access grant.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GrantRow {
+    /// Privilege name (e.g. `"blob-list"`).
+    pub privilege: String,
+    /// Base32 peer-id that holds this privilege.
+    pub peer_id: String,
+}
+
+/// Lists current grants, optionally filtered by peer or privilege.
+#[tauri::command]
+pub async fn grant_list(
+    state: State<'_, AppState>,
+    peer: Option<String>,
+    privilege: Option<String>,
+) -> Result<Vec<GrantRow>, String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    let mut kinds: Vec<EventKind> = Vec::new();
+    client
+        .send(Op::Grants { peer, privilege }, |event| kinds.push(event.kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(collect_records(kinds))
+}
+
+/// Grants `privilege` to `peer`.
+#[tauri::command]
+pub async fn grant_grant(
+    state: State<'_, AppState>,
+    peer: String,
+    privilege: String,
+) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(Op::Grant { peer, privilege }, |_| {})
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Revokes `privilege` from `peer`.
+#[tauri::command]
+pub async fn grant_revoke(
+    state: State<'_, AppState>,
+    peer: String,
+    privilege: String,
+) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(Op::Revoke { peer, privilege }, |_| {})
+        .await
+        .map_err(|e| e.to_string())
+}
+
 /// Returns this node's peer-id as a base32 string.
 ///
 /// The peer-id is the node's public key encoded in base32 — share it so
@@ -395,6 +448,16 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].format, "raw");
         assert_eq!(results[0].ticket, "rdrop://aabbcc");
+    }
+
+    #[test]
+    fn collect_records_deserializes_grant_rows() {
+        let events = vec![
+            record_kind(json!({"privilege": "blob-list", "peer_id": "abc"})),
+        ];
+        let rows: Vec<GrantRow> = collect_records(events);
+        assert_eq!(rows[0].privilege, "blob-list");
+        assert_eq!(rows[0].peer_id, "abc");
     }
 
     #[test]

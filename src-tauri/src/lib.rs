@@ -25,6 +25,9 @@ pub fn run() {
             commands::peer_list,
             commands::peer_add,
             commands::peer_remove,
+            commands::grant_list,
+            commands::grant_grant,
+            commands::grant_revoke,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

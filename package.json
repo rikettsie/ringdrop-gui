@@ -9,10 +9,12 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "pretest": "svelte-kit sync",
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
     "docs:dev": "vitepress dev docs",
+    "predocs:build": "svelte-kit sync",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },

@@ -16,25 +16,20 @@ peers, grant catalog access, and download from tickets with live progress.
 
 ## Architecture
 
-```
-┌──────────────────────────────┐
-│    ringdrop-gui (Tauri v2)   │
-│  ┌───────────┐ ┌───────────┐ │
-│  │  Svelte   │ │   Tauri   │ │
-│  │ frontend  │◄►  backend  │ │
-│  └───────────┘ └─────┬─────┘ │
-└───────────────────── │ ──────┘
-                       │ TCP localhost
-                       │ JSON (Op / EventKind)
-                       ▼
-┌──────────────────────────────┐
-│      ringdrop daemon         │
-│  ┌────────────────────────┐  │
-│  │        Node            │  │
-│  │  FsStore  Registry     │  │
-│  │  Grants   Peers        │  │
-│  └────────────────────────┘  │
-└──────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph gui["ringdrop-gui (Tauri v2)"]
+        direction LR
+        fe["Svelte\nfrontend"]
+        be["Tauri\nbackend"]
+        fe <--> be
+    end
+
+    be -- "TCP localhost · JSON (Op / EventKind)" --> daemon
+
+    subgraph daemon["ringdrop daemon"]
+        node["Node\nFsStore · Registry · Grants · Peers"]
+    end
 ```
 
 The Tauri backend reads `~/.ringdrop/config.json` to locate the daemon port,

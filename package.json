@@ -22,14 +22,17 @@
     "@sveltejs/adapter-static": "^3.0.6",
     "@sveltejs/kit": "^2.9.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@tauri-apps/cli": "^2",
+    "@testing-library/jest-dom": "^6",
+    "@testing-library/svelte": "^5",
+    "@types/node": "^25.9.1",
+    "jsdom": "^26",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
+    "tailwindcss": "^4.3.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",
-    "@tauri-apps/cli": "^2",
-    "vitest": "^3",
-    "@testing-library/svelte": "^5",
-    "@testing-library/jest-dom": "^6",
-    "jsdom": "^26"
+    "vitest": "^3"
   }
 }

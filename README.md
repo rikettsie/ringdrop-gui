@@ -41,7 +41,7 @@ configuration; no embedded node.
   cargo install ringdrop
   rdrop daemon start
   ```
-- **Node ≥ 20** — `node --version`
+- **Node ≥ 24** — `node --version` (use [fnm](https://github.com/Schniz/fnm) to match `.node-version`)
 - **Rust stable** — `rustup update stable`
 - **Linux system deps** (Tauri webview):
   ```sh
@@ -69,3 +69,13 @@ npm run tauri build
 
 Pre-built installers for all platforms are available on the
 [Releases](../../releases) page.
+
+## Docs
+
+User-facing documentation lives in [`docs/`](./docs) and is published to
+GitHub Pages on every push to `main`.
+
+```sh
+npm run docs:dev      # live-reload at localhost:5173
+npm run docs:build    # production build → docs/.vitepress/dist
+```

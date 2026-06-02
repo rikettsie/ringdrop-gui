@@ -148,6 +148,30 @@ pub async fn blob_remove(state: State<'_, AppState>, target: String) -> Result<(
         .map_err(|e| e.to_string())
 }
 
+/// Returns this node's peer-id as a base32 string.
+///
+/// The peer-id is the node's public key encoded in base32 — share it so
+/// others can add this node to their rings or grant it catalog access.
+#[tauri::command]
+pub async fn node_id(state: State<'_, AppState>) -> Result<String, String> {
+    #[derive(serde::Deserialize)]
+    struct Rec {
+        peer_id: String,
+    }
+
+    let client = state.client().ok_or("daemon not configured")?;
+    let mut kinds: Vec<EventKind> = Vec::new();
+    client
+        .send(Op::NodeId, |event| kinds.push(event.kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    collect_records::<Rec>(kinds)
+        .into_iter()
+        .next()
+        .map(|r| r.peer_id)
+        .ok_or_else(|| "daemon returned no peer_id record".into())
+}
+
 /// Downloads the blob described by `ticket` into the directory `dest`.
 ///
 /// Progress is streamed to the frontend as `"transfer_progress"` events with
@@ -241,6 +265,15 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].format, "raw");
         assert_eq!(results[0].ticket, "rdrop://aabbcc");
+    }
+
+    #[test]
+    fn node_id_record_is_deserializable() {
+        #[derive(serde::Deserialize)]
+        struct Rec { peer_id: String }
+        let events = vec![record_kind(json!({ "peer_id": "abc32peerid" }))];
+        let recs: Vec<Rec> = collect_records(events);
+        assert_eq!(recs[0].peer_id, "abc32peerid");
     }
 
     #[test]

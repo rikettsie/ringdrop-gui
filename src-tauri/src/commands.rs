@@ -1,67 +1,38 @@
-use std::path::PathBuf;
+//! Tauri commands — thin wrappers around `DaemonClient::send`.
+//!
+//! Every command follows the same pattern:
+//! ```text
+//! state.client()  →  DaemonClient::send(Op::…, |event| window.emit("rd_event", event))
+//! ```
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use tauri::State;
 
-/// Subset of ~/.ringdrop/config.json we care about.
-/// Unknown fields (secret_key, relay_url, …) are silently ignored.
-#[derive(Deserialize)]
-struct RingdropConfig {
-    daemon_port: u16,
-}
+use crate::state::AppState;
 
-/// What the frontend receives from `get_config`.
+// ── Response types ────────────────────────────────────────────────────────────
+
 #[derive(Serialize)]
-pub struct ConfigInfo {
-    pub daemon_port: u16,
+pub struct DaemonStatus {
+    pub running: bool,
+    /// Port the daemon is (or should be) listening on, if configured.
+    pub port: Option<u16>,
 }
 
-fn config_path() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join(".ringdrop")
-        .join("config.json")
-}
+// ── Commands ──────────────────────────────────────────────────────────────────
 
-fn load_config() -> Result<RingdropConfig, String> {
-    let path = config_path();
-    let raw = std::fs::read_to_string(&path)
-        .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
-    serde_json::from_str(&raw).map_err(|e| format!("invalid config: {e}"))
-}
-
-/// Returns the daemon port from ~/.ringdrop/config.json.
+/// Returns whether the ringdrop daemon is reachable and the configured port.
 ///
-/// The frontend calls this once at startup to know which port the daemon
-/// is listening on, then uses it for all subsequent DaemonClient calls.
+/// Called by `DaemonBadge` on a polling interval to update the connection
+/// indicator. Safe to call when no config exists — returns `running: false`.
 #[tauri::command]
-pub fn get_config() -> Result<ConfigInfo, String> {
-    let cfg = load_config()?;
-    Ok(ConfigInfo {
-        daemon_port: cfg.daemon_port,
+pub async fn daemon_status(state: State<'_, AppState>) -> Result<DaemonStatus, String> {
+    let running = match state.client() {
+        None => false,
+        Some(client) => client.is_running().await,
+    };
+    Ok(DaemonStatus {
+        running,
+        port: state.port,
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn config_deserializes_daemon_port() {
-        let json = r#"{"daemon_port": 7070, "secret_key": "somekey"}"#;
-        let cfg: RingdropConfig = serde_json::from_str(json).unwrap();
-        assert_eq!(cfg.daemon_port, 7070);
-    }
-
-    #[test]
-    fn config_ignores_unknown_fields() {
-        let json = r#"{"daemon_port": 9090, "relay_url": null, "extra": true}"#;
-        let cfg: RingdropConfig = serde_json::from_str(json).unwrap();
-        assert_eq!(cfg.daemon_port, 9090);
-    }
-
-    #[test]
-    fn config_rejects_missing_port() {
-        let result: Result<RingdropConfig, _> = serde_json::from_str(r#"{"other": 1}"#);
-        assert!(result.is_err());
-    }
 }

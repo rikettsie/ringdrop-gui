@@ -1,3 +1,5 @@
+FNM := $(HOME)/.local/share/fnm/fnm
+
 .PHONY: release
 
 # Bump the version, commit, tag, and push.
@@ -10,7 +12,7 @@ endif
 	@echo "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$$' || \
 		(echo "Error: VERSION must be x.y.z (got '$(VERSION)')"; exit 1)
 	@echo "Patching package.json…"
-	npm version $(VERSION) --no-git-tag-version
+	@eval "$$($(FNM) env --shell bash)" && npm version $(VERSION) --no-git-tag-version
 	@echo "Patching src-tauri/Cargo.toml…"
 	sed -i 's/^version = ".*"/version = "$(VERSION)"/' src-tauri/Cargo.toml
 	@echo "Updating Cargo.lock…"

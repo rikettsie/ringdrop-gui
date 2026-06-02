@@ -11,7 +11,6 @@ const { invoke } = await import("@tauri-apps/api/core");
 const mockInvoke = vi.mocked(invoke);
 
 describe("DaemonBadge", () => {
-  beforeEach(() => vi.clearAllMocks());
   afterEach(() => cleanup());
 
   it("shows connected when daemon is running", async () => {

@@ -11,7 +11,6 @@ const TEST_GRANTS = [
   { privilege: "blob-list", peer_id: "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222" },
 ];
 
-afterEach(() => cleanup());
 
 describe("GrantPanel", () => {
   beforeEach(() => {

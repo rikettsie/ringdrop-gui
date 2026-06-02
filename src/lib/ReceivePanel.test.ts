@@ -19,7 +19,6 @@ const { open: openDialog } = await import("@tauri-apps/plugin-dialog");
 const mockInvoke = vi.mocked(invoke);
 const mockOpen = vi.mocked(openDialog);
 
-afterEach(() => cleanup());
 
 describe("ReceivePanel", () => {
   beforeEach(() => {

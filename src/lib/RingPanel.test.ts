@@ -16,7 +16,6 @@ const TEST_MEMBERS = [
   { peer_id: "bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222cccc3333", nickname: null  },
 ];
 
-afterEach(() => cleanup());
 
 describe("RingPanel", () => {
   beforeEach(() => {

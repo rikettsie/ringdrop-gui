@@ -2,9 +2,9 @@
   import { invoke } from "@tauri-apps/api/core";
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import type { RemoteBlobRow } from "./types";
   import { truncateHash, formatBytes } from "./utils";
 
-  interface RemoteBlobRow { hash: string; name: string; ticket: string }
   interface Progress { done: number; total: number }
 
   let peerId = $state("");
@@ -12,13 +12,12 @@
   let loading = $state(false);
   let error: string | null = $state(null);
 
-  // Per-row download state
-  let downloading: string | null = $state(null); // hash being downloaded
+  let downloading: string | null = $state(null);
   let progress: Progress = $state({ done: 0, total: 0 });
-  let downloadDone: string | null = $state(null); // hash of last completed download
+  let downloadDone: string | null = $state(null);
 
   let progressPct = $derived(
-    progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0
+    progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0,
   );
 
   async function fetchCatalog() {
@@ -63,7 +62,6 @@
 <div class="flex flex-col gap-4">
   <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-500">Remote catalog</h2>
 
-  <!-- Peer lookup form -->
   <div class="flex gap-2">
     <input
       type="text"
@@ -84,7 +82,6 @@
     <p class="rounded border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">{error}</p>
   {/if}
 
-  <!-- Remote blob table -->
   {#if blobs.length > 0}
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -102,7 +99,7 @@
               <td class="py-2.5 pr-4 font-mono text-xs text-neutral-500">{truncateHash(row.hash, 12)}</td>
               <td class="py-2.5 text-right">
                 {#if downloading === row.hash}
-                  <div class="flex flex-col items-end gap-1 min-w-32">
+                  <div class="flex min-w-32 flex-col items-end gap-1">
                     <div class="h-1 w-full overflow-hidden rounded-full bg-neutral-800">
                       <div class="h-full rounded-full bg-amber-500 transition-all duration-150" style="width:{progressPct}%"></div>
                     </div>

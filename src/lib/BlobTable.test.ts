@@ -9,7 +9,6 @@ const rows = [
   { hash: "bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222cccc3333", name: "doc.pdf",   rings: [],          ticket: "rdrop://bbbb" },
 ];
 
-afterEach(() => cleanup());
 
 describe("BlobTable", () => {
   beforeEach(() => {

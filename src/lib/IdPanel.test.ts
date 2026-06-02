@@ -18,7 +18,6 @@ vi.mock("qrcode", () => ({
 const { invoke } = await import("@tauri-apps/api/core");
 const mockInvoke = vi.mocked(invoke);
 
-afterEach(() => cleanup());
 
 describe("IdPanel", () => {
   beforeEach(() => {

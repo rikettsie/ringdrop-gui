@@ -5072,7 +5072,8 @@ dependencies = [
 [[package]]
 name = "ringdrop"
 version = "0.12.0"
-source = "git+https://github.com/rikettsie/ringdrop?branch=feat%2Fadd-structured-text-in-IPC#6bbc392bf167cc7fcc136703544cf3946c41c9c6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1612f9d7b804e2b83a658be77376fc092880c29d61547ea42c066ce05a480e5f"
 dependencies = [
  "anyhow",
  "bao-tree",

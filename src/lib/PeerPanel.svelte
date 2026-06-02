@@ -1,20 +1,19 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import type { PeerEntry } from "./types";
   import { truncateHash } from "./utils";
+  import ConfirmButton from "./ConfirmButton.svelte";
 
-  interface PeerRow { peer_id: string; nickname: string | null }
-
-  let peers: PeerRow[] = $state([]);
+  let peers: PeerEntry[] = $state([]);
   let error: string | null = $state(null);
   let adding = $state(false);
   let newPeerId = $state("");
   let newNickname = $state("");
-  let removingPeer: string | null = $state(null);
 
   async function load() {
     error = null;
     try {
-      peers = await invoke<PeerRow[]>("peer_list");
+      peers = await invoke<PeerEntry[]>("peer_list");
     } catch (e) {
       error = String(e);
     }
@@ -25,10 +24,7 @@
     if (!peer) return;
     error = null;
     try {
-      await invoke("peer_add", {
-        peer,
-        nickname: newNickname.trim() || null,
-      });
+      await invoke("peer_add", { peer, nickname: newNickname.trim() || null });
       newPeerId = "";
       newNickname = "";
       adding = false;
@@ -42,7 +38,6 @@
     error = null;
     try {
       await invoke("peer_remove", { peer: peerId });
-      removingPeer = null;
       peers = peers.filter((p) => p.peer_id !== peerId);
     } catch (e) {
       error = String(e);
@@ -65,7 +60,6 @@
     <p class="rounded border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">{error}</p>
   {/if}
 
-  <!-- Add-peer form -->
   {#if adding}
     <div class="flex flex-col gap-2 rounded border border-neutral-800 bg-neutral-900/50 p-3">
       <div class="flex gap-2">
@@ -90,15 +84,11 @@
           onclick={addPeer}
           class="rounded border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-300 transition-colors hover:border-amber-500"
         >Add</button>
-        <button
-          onclick={() => (adding = false)}
-          class="text-xs text-neutral-600 hover:text-neutral-400"
-        >Cancel</button>
+        <button onclick={() => (adding = false)} class="text-xs text-neutral-600 hover:text-neutral-400">Cancel</button>
       </div>
     </div>
   {/if}
 
-  <!-- Peer table -->
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <thead>
@@ -119,29 +109,14 @@
         {#each peers as p (p.peer_id)}
           <tr class="border-b border-neutral-900 hover:bg-neutral-900/50">
             <td class="py-2.5 pr-4 text-neutral-200">
-              {#if p.nickname}
-                {p.nickname}
-              {:else}
-                <span class="italic text-neutral-600">—</span>
-              {/if}
+              {#if p.nickname}{p.nickname}{:else}<span class="italic text-neutral-600">—</span>{/if}
             </td>
             <td class="py-2.5 pr-4 font-mono text-xs text-neutral-500">
               {truncateHash(p.peer_id, 16)}
             </td>
             <td class="py-2.5 text-right">
-              {#if removingPeer === p.peer_id}
-                <span class="mr-2 text-xs text-neutral-400">Remove?</span>
+              <ConfirmButton label="Remove?" onConfirm={() => removePeer(p.peer_id)}>
                 <button
-                  onclick={() => removePeer(p.peer_id)}
-                  class="mr-2 text-xs text-red-400 hover:text-red-300"
-                >Yes</button>
-                <button
-                  onclick={() => (removingPeer = null)}
-                  class="text-xs text-neutral-600 hover:text-neutral-400"
-                >No</button>
-              {:else}
-                <button
-                  onclick={() => (removingPeer = p.peer_id)}
                   class="text-neutral-600 transition-colors hover:text-red-500"
                   aria-label="Remove {p.nickname ?? p.peer_id}"
                 >
@@ -149,7 +124,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
-              {/if}
+              </ConfirmButton>
             </td>
           </tr>
         {/each}

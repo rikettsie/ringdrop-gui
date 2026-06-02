@@ -1,10 +1,9 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import type { GrantRow } from "./types";
   import { truncateHash } from "./utils";
+  import ConfirmButton from "./ConfirmButton.svelte";
 
-  interface GrantRow { privilege: string; peer_id: string }
-
-  // For now the only grantable privilege is blob-list; extend when the daemon exposes more.
   const PRIVILEGES = ["blob-list"];
 
   let grants: GrantRow[] = $state([]);
@@ -12,9 +11,10 @@
   let adding = $state(false);
   let newPeerId = $state("");
   let newPrivilege = $state(PRIVILEGES[0]);
-  let revokingKey: string | null = $state(null); // "<peer_id>:<privilege>"
 
-  function rowKey(r: GrantRow) { return `${r.peer_id}:${r.privilege}`; }
+  function rowKey(r: GrantRow) {
+    return `${r.peer_id}:${r.privilege}`;
+  }
 
   async function load() {
     error = null;
@@ -43,7 +43,6 @@
     error = null;
     try {
       await invoke("grant_revoke", { peer, privilege });
-      revokingKey = null;
       grants = grants.filter((g) => !(g.peer_id === peer && g.privilege === privilege));
     } catch (e) {
       error = String(e);
@@ -66,7 +65,6 @@
     <p class="rounded border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">{error}</p>
   {/if}
 
-  <!-- Grant form -->
   {#if adding}
     <div class="flex flex-col gap-2 rounded border border-neutral-800 bg-neutral-900/50 p-3">
       <div class="flex gap-2">
@@ -97,7 +95,6 @@
     </div>
   {/if}
 
-  <!-- Grant table -->
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <thead>
@@ -124,13 +121,8 @@
               {truncateHash(g.peer_id, 16)}
             </td>
             <td class="py-2.5 text-right">
-              {#if revokingKey === rowKey(g)}
-                <span class="mr-2 text-xs text-neutral-400">Revoke?</span>
-                <button onclick={() => revokePrivilege(g.peer_id, g.privilege)} class="mr-2 text-xs text-red-400 hover:text-red-300">Yes</button>
-                <button onclick={() => (revokingKey = null)} class="text-xs text-neutral-600 hover:text-neutral-400">No</button>
-              {:else}
+              <ConfirmButton label="Revoke?" onConfirm={() => revokePrivilege(g.peer_id, g.privilege)}>
                 <button
-                  onclick={() => (revokingKey = rowKey(g))}
                   class="text-neutral-600 transition-colors hover:text-red-500"
                   aria-label="Revoke {g.privilege} from {g.peer_id}"
                 >
@@ -138,7 +130,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
                 </button>
-              {/if}
+              </ConfirmButton>
             </td>
           </tr>
         {/each}

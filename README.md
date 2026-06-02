@@ -4,7 +4,7 @@
 [![Release](https://github.com/rikettsie/ringdrop-gui/actions/workflows/release.yml/badge.svg)](https://github.com/rikettsie/ringdrop-gui/actions/workflows/release.yml)
 [![Docs](https://github.com/rikettsie/ringdrop-gui/actions/workflows/docs.yml/badge.svg)](https://github.com/rikettsie/ringdrop-gui/actions/workflows/docs.yml)
 [![Latest release](https://img.shields.io/github/v/release/rikettsie/ringdrop-gui)](https://github.com/rikettsie/ringdrop-gui/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-neutral)](https://github.com/rikettsie/ringdrop-gui/releases/latest)
 
 Desktop GUI for [ringdrop](https://github.com/RingDropSpace/ringdrop) — P2P file

@@ -1,1 +1,5 @@
-<p class="text-neutral-500 text-sm">Select a section from the sidebar.</p>
+<script lang="ts">
+  import BlobPanel from "$lib/BlobPanel.svelte";
+</script>
+
+<BlobPanel />

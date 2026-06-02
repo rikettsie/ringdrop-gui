@@ -22,6 +22,9 @@ pub fn run() {
             commands::ring_members,
             commands::ring_add,
             commands::ring_remove,
+            commands::peer_list,
+            commands::peer_add,
+            commands::peer_remove,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

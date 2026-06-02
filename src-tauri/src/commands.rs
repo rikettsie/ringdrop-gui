@@ -231,6 +231,53 @@ pub async fn ring_remove(
         .map_err(|e| e.to_string())
 }
 
+/// One entry in the local peer address book.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PeerRow {
+    /// Base32 peer-id.
+    pub peer_id: String,
+    /// Human-readable label, if one was set.
+    pub nickname: Option<String>,
+}
+
+/// Lists all peers in the local address book.
+#[tauri::command]
+pub async fn peer_list(state: State<'_, AppState>) -> Result<Vec<PeerRow>, String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    let mut kinds: Vec<EventKind> = Vec::new();
+    client
+        .send(Op::PeerList, |event| kinds.push(event.kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(collect_records(kinds))
+}
+
+/// Adds a peer to the local address book, optionally with a nickname.
+///
+/// Idempotent: if the peer already exists the nickname is updated.
+#[tauri::command]
+pub async fn peer_add(
+    state: State<'_, AppState>,
+    peer: String,
+    nickname: Option<String>,
+) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(Op::PeerAdd { peer, nickname }, |_| {})
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Removes a peer from the address book and from all rings.
+#[tauri::command]
+pub async fn peer_remove(state: State<'_, AppState>, peer: String) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(Op::PeerRemove { peer }, |_| {})
+        .await
+        .map_err(|e| e.to_string())
+}
+
 /// Returns this node's peer-id as a base32 string.
 ///
 /// The peer-id is the node's public key encoded in base32 — share it so
@@ -348,6 +395,18 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].format, "raw");
         assert_eq!(results[0].ticket, "rdrop://aabbcc");
+    }
+
+    #[test]
+    fn collect_records_deserializes_peer_rows() {
+        let events = vec![
+            record_kind(json!({"peer_id": "abc", "nickname": "alice"})),
+            record_kind(json!({"peer_id": "def", "nickname": null})),
+        ];
+        let rows: Vec<PeerRow> = collect_records(events);
+        assert_eq!(rows[0].nickname, Some("alice".into()));
+        assert_eq!(rows[1].peer_id, "def");
+        assert_eq!(rows[1].nickname, None);
     }
 
     #[test]

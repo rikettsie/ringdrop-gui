@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-neutral)](https://github.com/rikettsie/ringdrop-gui/releases/latest)
 
-Desktop GUI for [ringdrop](https://github.com/RingDropSpace/ringdrop) — P2P file
+Desktop GUI for [ringdrop](https://github.com/rikettsie/ringdrop) — P2P file
 sharing with ring-based access control.
 
 Connects to a locally running ringdrop daemon over IPC and exposes the full

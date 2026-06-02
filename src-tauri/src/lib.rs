@@ -17,6 +17,11 @@ pub fn run() {
             commands::blob_remove,
             commands::receive,
             commands::node_id,
+            commands::ring_list,
+            commands::ring_create,
+            commands::ring_members,
+            commands::ring_add,
+            commands::ring_remove,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

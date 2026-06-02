@@ -148,6 +148,89 @@ pub async fn blob_remove(state: State<'_, AppState>, target: String) -> Result<(
         .map_err(|e| e.to_string())
 }
 
+/// One ring in the local registry.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RingRow {
+    /// Ring name (e.g. `"friends"`, `"work"`, or the built-in `"open"` ring).
+    pub name: String,
+    /// Whether this is the built-in open ring (publicly accessible to everyone).
+    pub open: bool,
+}
+
+/// One member of a ring.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemberRow {
+    /// Base32 peer-id.
+    pub peer_id: String,
+    /// Human-readable label, if one was set.
+    pub nickname: Option<String>,
+}
+
+/// Lists all rings in the local registry.
+#[tauri::command]
+pub async fn ring_list(state: State<'_, AppState>) -> Result<Vec<RingRow>, String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    let mut kinds: Vec<EventKind> = Vec::new();
+    client
+        .send(Op::RingList, |event| kinds.push(event.kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(collect_records(kinds))
+}
+
+/// Creates a new ring with the given name.
+#[tauri::command]
+pub async fn ring_create(state: State<'_, AppState>, name: String) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(Op::RingNew { name }, |_| {})
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Lists all members of `ring`.
+#[tauri::command]
+pub async fn ring_members(
+    state: State<'_, AppState>,
+    ring: String,
+) -> Result<Vec<MemberRow>, String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    let mut kinds: Vec<EventKind> = Vec::new();
+    client
+        .send(Op::RingMembers { ring }, |event| kinds.push(event.kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(collect_records(kinds))
+}
+
+/// Adds `peer` to `ring`. Registers the peer in the address book if absent.
+#[tauri::command]
+pub async fn ring_add(
+    state: State<'_, AppState>,
+    ring: String,
+    peer: String,
+) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(Op::RingAdd { ring, peer }, |_| {})
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Removes `peer` from `ring`.
+#[tauri::command]
+pub async fn ring_remove(
+    state: State<'_, AppState>,
+    ring: String,
+    peer: String,
+) -> Result<(), String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    client
+        .send(Op::RingRemove { ring, peer }, |_| {})
+        .await
+        .map_err(|e| e.to_string())
+}
+
 /// Returns this node's peer-id as a base32 string.
 ///
 /// The peer-id is the node's public key encoded in base32 — share it so
@@ -265,6 +348,30 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].format, "raw");
         assert_eq!(results[0].ticket, "rdrop://aabbcc");
+    }
+
+    #[test]
+    fn collect_records_deserializes_ring_rows() {
+        let events = vec![
+            record_kind(json!({"name": "friends", "open": false})),
+            record_kind(json!({"name": "open",    "open": true})),
+        ];
+        let rows: Vec<RingRow> = collect_records(events);
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].name, "friends");
+        assert!(!rows[0].open);
+        assert!(rows[1].open);
+    }
+
+    #[test]
+    fn collect_records_deserializes_member_rows() {
+        let events = vec![
+            record_kind(json!({"peer_id": "abc", "nickname": "alice"})),
+            record_kind(json!({"peer_id": "def", "nickname": null})),
+        ];
+        let rows: Vec<MemberRow> = collect_records(events);
+        assert_eq!(rows[0].nickname, Some("alice".into()));
+        assert_eq!(rows[1].nickname, None);
     }
 
     #[test]

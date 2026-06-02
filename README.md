@@ -38,7 +38,7 @@ configuration; no embedded node.
 
 - **ringdrop daemon** — install the CLI and start the daemon:
   ```sh
-  cargo install rdrop
+  cargo install ringdrop
   rdrop daemon start
   ```
 - **Node ≥ 20** — `node --version`

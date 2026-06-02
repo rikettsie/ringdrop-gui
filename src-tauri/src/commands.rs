@@ -331,6 +331,35 @@ pub async fn grant_revoke(
         .map_err(|e| e.to_string())
 }
 
+/// One blob entry from a remote peer's catalog.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteBlobRow {
+    /// BLAKE3 hex hash.
+    pub hash: String,
+    /// File or collection name.
+    pub name: String,
+    /// `rdrop://…` share ticket.
+    pub ticket: String,
+}
+
+/// Fetches the blob catalog from a remote peer.
+///
+/// The remote node must have granted `blob-list` to this node's identity.
+/// Returns one [`RemoteBlobRow`] per accessible blob.
+#[tauri::command]
+pub async fn remote_blob_list(
+    state: State<'_, AppState>,
+    peer: String,
+) -> Result<Vec<RemoteBlobRow>, String> {
+    let client = state.client().ok_or("daemon not configured")?;
+    let mut kinds: Vec<EventKind> = Vec::new();
+    client
+        .send(Op::RemoteBlobList { peer }, |event| kinds.push(event.kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(collect_records(kinds))
+}
+
 /// Returns this node's peer-id as a base32 string.
 ///
 /// The peer-id is the node's public key encoded in base32 — share it so
@@ -448,6 +477,15 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].format, "raw");
         assert_eq!(results[0].ticket, "rdrop://aabbcc");
+    }
+
+    #[test]
+    fn collect_records_deserializes_remote_blob_rows() {
+        let events = vec![record_kind(json!({
+            "hash": "abc", "name": "video.mp4", "ticket": "rdrop://abc"
+        }))];
+        let rows: Vec<RemoteBlobRow> = collect_records(events);
+        assert_eq!(rows[0].name, "video.mp4");
     }
 
     #[test]

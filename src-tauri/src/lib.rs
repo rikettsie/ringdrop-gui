@@ -28,6 +28,7 @@ pub fn run() {
             commands::grant_list,
             commands::grant_grant,
             commands::grant_revoke,
+            commands::remote_blob_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

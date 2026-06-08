@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, cleanup, fireEvent } from "@testing-library/svelte";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, fireEvent } from "@testing-library/svelte";
 import RemotePanel from "./RemotePanel.svelte";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
@@ -59,6 +59,7 @@ describe("RemotePanel", () => {
     expect(mockInvoke).toHaveBeenCalledWith("receive", {
       ticket: TEST_BLOBS[0].ticket,
       dest: "/tmp",
+      hash: TEST_BLOBS[0].hash,
     });
   });
 });

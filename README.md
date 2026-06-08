@@ -11,7 +11,7 @@
 
 </div>
 
-<img width="35%" align="right" src="https://raw.githubusercontent.com/rikettsie/ringdrop-gui/main/docs/mascot_gui.png">
+<img width="28%" align="right" src="https://raw.githubusercontent.com/rikettsie/ringdrop-gui/main/docs/mascot_gui.png">
 
 Desktop GUI for [ringdrop](https://github.com/rikettsie/ringdrop) — P2P file
 sharing with ring-based access control.
@@ -21,6 +21,8 @@ Connects to a locally running ringdrop daemon over IPC and exposes the full
 peers, grant catalog access, and download from tickets with live progress.
 
 <br clear="right">
+
+<img width="80%" src="docs/assets/ringdrop_gui_screenshot_1.jpg">
 
 ## Architecture
 

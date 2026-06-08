@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-06-08
+
+### Bug Fixes
+
+- Correctly show item hashes in panel lists
+- Adjust many view details
+
+### Documentation
+
+- Add mascot on tauri v2
+
 ## [0.1.12] - 2026-06-02
 
 ### Bug Fixes

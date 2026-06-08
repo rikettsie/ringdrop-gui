@@ -11,6 +11,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState::new(config::read_daemon_port()))
         .invoke_handler(tauri::generate_handler![
+            commands::app_versions,
             commands::daemon_status,
             commands::blob_list,
             commands::blob_import,

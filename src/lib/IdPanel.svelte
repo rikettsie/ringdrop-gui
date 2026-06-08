@@ -15,6 +15,7 @@
         type: "svg",
         width: 160,
         margin: 1,
+        errorCorrectionLevel: "H",
         color: { dark: "#f59e0b", light: "#0a0a0a" },
       });
     } catch (e) {
@@ -61,12 +62,17 @@
     <!-- QR code -->
     {#if qrSvg}
       <div class="flex flex-col gap-2">
-        <span class="text-xs text-neutral-500">Scan to share your ID</span>
+        <span class="text-xs text-neutral-500">They can also scan to import your ID</span>
         <div
-          class="w-fit rounded border border-neutral-800 bg-[#0a0a0a] p-3"
+          class="relative w-fit rounded border border-neutral-800 bg-[#0a0a0a] p-3"
           aria-label="QR code for peer ID"
         >
           {@html qrSvg}
+          <img
+            src="/mascot.png"
+            alt=""
+            class="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0a0a0a] object-contain p-0.5"
+          />
         </div>
       </div>
     {/if}

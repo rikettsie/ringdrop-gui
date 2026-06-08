@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
+  import jsQR from "jsqr";
   import type { PeerEntry } from "./types";
   import ConfirmButton from "./ConfirmButton.svelte";
 
@@ -8,6 +9,8 @@
   let adding = $state(false);
   let newPeerId = $state("");
   let newNickname = $state("");
+  let scanError: string | null = $state(null);
+  let fileInput: HTMLInputElement | undefined = $state();
 
   async function load() {
     error = null;
@@ -43,6 +46,40 @@
     }
   }
 
+  async function handleQrScan(e: Event) {
+    scanError = null;
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    (e.target as HTMLInputElement).value = "";
+
+    try {
+      const url = URL.createObjectURL(file);
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = reject;
+        el.src = url;
+      });
+      URL.revokeObjectURL(url);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        newPeerId = code.data;
+      } else {
+        scanError = "No QR code found in the image.";
+      }
+    } catch (err) {
+      scanError = `Failed to read image: ${err}`;
+    }
+  }
+
   $effect(() => { load(); });
 </script>
 
@@ -50,7 +87,7 @@
   <div class="flex items-center justify-between">
     <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-500">Peers</h2>
     <button
-      onclick={() => { adding = true; newPeerId = ""; newNickname = ""; }}
+      onclick={() => { adding = true; newPeerId = ""; newNickname = ""; scanError = null; }}
       class="rounded border border-amber-700/60 bg-amber-950/40 px-2.5 py-1 text-xs font-medium text-amber-300 transition-colors hover:border-amber-500 hover:bg-amber-900/40"
     >Add peer</button>
   </div>
@@ -62,13 +99,27 @@
   {#if adding}
     <div class="flex flex-col gap-2 rounded border border-neutral-800 bg-neutral-900/50 p-3">
       <div class="flex gap-2">
-        <input
-          type="text"
-          placeholder="Base32 peer ID"
-          bind:value={newPeerId}
-          class="min-w-0 flex-1 rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-100 outline-none focus:border-amber-700"
-          aria-label="Peer ID"
-        />
+        <div class="flex min-w-0 flex-1 gap-1">
+          <input
+            type="text"
+            placeholder="Base32 peer ID"
+            bind:value={newPeerId}
+            class="min-w-0 flex-1 rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-100 outline-none focus:border-amber-700"
+            aria-label="Peer ID"
+          />
+          <button
+            type="button"
+            onclick={() => fileInput?.click()}
+            title="Scan QR code from image file"
+            aria-label="Scan QR code from image"
+            class="shrink-0 rounded border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-neutral-500 transition-colors hover:border-amber-700 hover:text-amber-400"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/>
+              <path d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75V16.5zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z"/>
+            </svg>
+          </button>
+        </div>
         <input
           type="text"
           placeholder="Nickname (optional)"
@@ -78,12 +129,22 @@
           aria-label="Nickname"
         />
       </div>
+      <input
+        type="file"
+        accept="image/*"
+        bind:this={fileInput}
+        class="hidden"
+        onchange={handleQrScan}
+      />
+      {#if scanError}
+        <p class="text-xs text-red-400">{scanError}</p>
+      {/if}
       <div class="flex gap-2">
         <button
           onclick={addPeer}
           class="rounded border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-300 transition-colors hover:border-amber-500"
         >Add</button>
-        <button onclick={() => (adding = false)} class="text-xs text-neutral-600 hover:text-neutral-400">Cancel</button>
+        <button onclick={() => { adding = false; scanError = null; }} class="text-xs text-neutral-600 hover:text-neutral-400">Cancel</button>
       </div>
     </div>
   {/if}
@@ -107,7 +168,7 @@
         {/if}
         {#each peers as p (p.peer_id)}
           <tr class="border-b border-neutral-900 hover:bg-neutral-900/50">
-            <td class="py-2.5 pr-4 text-neutral-200">
+            <td class="overflow-hidden break-words py-2.5 pr-4 text-neutral-200">
               {#if p.nickname}{p.nickname}{:else}<span class="italic text-neutral-600">—</span>{/if}
             </td>
             <td class="max-w-0 py-2.5 pr-4">

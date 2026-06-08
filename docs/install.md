@@ -71,3 +71,15 @@ npm install
 npm run tauri build
 # → src-tauri/target/release/bundle/
 ```
+
+## Develop
+
+```sh
+npm install
+make hooks        # activate git hooks (once, after cloning)
+npm run tauri dev
+```
+
+The SvelteKit frontend reloads on file changes. The Rust backend recompiles
+automatically when `src-tauri/` files are modified. A running ringdrop daemon
+is still required (see [Prerequisites](#prerequisites) above).

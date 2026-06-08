@@ -47,7 +47,7 @@
       {/if}
       {#each rows as row (row.hash)}
         <tr class="group border-b border-neutral-900 transition-colors hover:bg-neutral-900/60">
-          <td class="py-2.5 pr-4 text-neutral-100">{row.name}</td>
+          <td class="overflow-hidden break-words py-2.5 pr-4 text-neutral-100">{row.name}</td>
           <td class="max-w-0 py-2.5 pr-4">
             <span class="block truncate font-mono text-xs text-neutral-500" title={row.hash}>{row.hash}</span>
           </td>

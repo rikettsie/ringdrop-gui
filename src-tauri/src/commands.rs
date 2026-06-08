@@ -88,7 +88,25 @@ pub struct RemoteBlobRow {
     pub ticket: String,
 }
 
+/// GUI and daemon version numbers, baked in at compile time.
+#[derive(Serialize)]
+pub struct AppVersions {
+    /// Version of this GUI application (from its `Cargo.toml`).
+    pub gui: &'static str,
+    /// Version of the `ringdrop` crate this binary was compiled against.
+    pub daemon: &'static str,
+}
+
 // ── Commands ──────────────────────────────────────────────────────────────────
+
+/// Returns the GUI and ringdrop crate versions, both resolved at compile time.
+#[tauri::command]
+pub fn app_versions() -> AppVersions {
+    AppVersions {
+        gui: env!("CARGO_PKG_VERSION"),
+        daemon: env!("RINGDROP_VERSION"),
+    }
+}
 
 /// Returns whether the ringdrop daemon is reachable and the configured port.
 ///

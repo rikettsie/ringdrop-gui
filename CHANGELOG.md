@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-06-08
+
+### Bug Fixes
+
+- (**remote**) Show empty-state only after a completed fetch
+- (**remote**) Propagate daemon Error events and fix download UX
+- (**icons**) Generate tauri iconsvia presets
+
+### Features
+
+- Warn on ringdrop CLI/crate version mismatch at startup
+- (**remote**) Allow concurrent downloads with per-blob progress bars
+
 ## [0.3.0] - 2026-06-08
 
 ### Bug Fixes

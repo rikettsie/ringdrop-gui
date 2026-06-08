@@ -13,13 +13,10 @@
   let error: string | null = $state(null);
   let fetched = $state(false);
 
-  let downloading: string | null = $state(null);
-  let progress: Progress = $state({ done: 0, total: 0 });
+  // Per-hash download state — allows concurrent downloads.
+  let inFlight: Record<string, boolean> = $state({});
+  let progresses: Record<string, Progress> = $state({});
   let downloadedAt: Record<string, number> = $state({});
-
-  let progressPct = $derived(
-    progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0,
-  );
 
   async function fetchCatalog() {
     const peer = peerId.trim();
@@ -41,23 +38,29 @@
   async function download(row: RemoteBlobRow) {
     const dest = await openDialog({ directory: true, multiple: false });
     if (!dest) return;
-    downloading = row.hash;
-    progress = { done: 0, total: 0 };
+    inFlight[row.hash] = true;
+    progresses[row.hash] = { done: 0, total: 0 };
     error = null;
 
-    const unlisten: UnlistenFn = await listen<Progress>("transfer_progress", (ev) => {
-      progress = ev.payload;
-    });
+    const unlisten: UnlistenFn = await listen<Progress>(
+      `transfer_progress/${row.hash}`,
+      (ev) => { progresses[row.hash] = ev.payload; },
+    );
 
     try {
-      await invoke("receive", { ticket: row.ticket, dest });
+      await invoke("receive", { ticket: row.ticket, dest, hash: row.hash });
       downloadedAt[row.hash] = Date.now();
     } catch (e) {
       error = String(e);
     } finally {
       unlisten();
-      downloading = null;
+      inFlight[row.hash] = false;
     }
+  }
+
+  function progressPct(hash: string): number {
+    const p = progresses[hash];
+    return p && p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
   }
 
   function formatDownloadTime(ts: number): string {
@@ -115,18 +118,20 @@
                 <div class="flex flex-col items-end gap-1">
                   <button
                     onclick={() => download(row)}
-                    disabled={downloading !== null}
-                    title={downloading !== null ? "A download is already in progress" : `Download ${row.name}`}
+                    disabled={!!inFlight[row.hash]}
+                    title={inFlight[row.hash] ? "Download in progress" : `Download ${row.name}`}
                     class="rounded border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-xs text-neutral-300 transition-colors hover:border-amber-700 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Download {row.name}"
                   >Download</button>
-                  {#if downloading === row.hash}
+                  {#if inFlight[row.hash]}
                     <div class="w-full min-w-24">
                       <div class="h-1 w-full overflow-hidden rounded-full bg-neutral-800">
-                        <div class="h-full rounded-full bg-amber-500 transition-all duration-150" style="width:{progressPct}%"></div>
+                        <div class="h-full rounded-full bg-amber-500 transition-all duration-150" style="width:{progressPct(row.hash)}%"></div>
                       </div>
                       <span class="text-xs text-neutral-600">
-                        {progress.total > 0 ? `${formatBytes(progress.done)} / ${formatBytes(progress.total)}` : "Connecting…"}
+                        {progresses[row.hash]?.total > 0
+                          ? `${formatBytes(progresses[row.hash].done)} / ${formatBytes(progresses[row.hash].total)}`
+                          : "Connecting…"}
                       </span>
                     </div>
                   {/if}

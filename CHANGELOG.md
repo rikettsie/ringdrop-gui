@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2026-06-08
+
+### Bug Fixes
+
+- (**license**) Fill bundle metadata fields in tauri.conf.json
+
 ## [0.3.1] - 2026-06-08
 
 ### Bug Fixes

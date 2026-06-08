@@ -1,19 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { truncateHash, formatBytes } from './utils';
-
-describe('truncateHash', () => {
-  it('truncates a long hash and appends ellipsis', () => {
-    expect(truncateHash('abcdef1234567890', 8)).toBe('abcdef12…');
-  });
-
-  it('leaves a hash shorter than the limit untouched', () => {
-    expect(truncateHash('abc', 8)).toBe('abc');
-  });
-
-  it('leaves a hash of exactly the limit length untouched', () => {
-    expect(truncateHash('abcdefgh', 8)).toBe('abcdefgh');
-  });
-});
+import { formatBytes } from './utils';
 
 describe('formatBytes', () => {
   it('formats zero bytes', () => {

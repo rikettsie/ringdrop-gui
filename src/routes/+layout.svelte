@@ -1,14 +1,23 @@
 <script lang="ts">
   import "../app.css";
+  import { invoke } from "@tauri-apps/api/core";
   import { page } from "$app/stores";
   import DaemonBadge from "$lib/DaemonBadge.svelte";
 
   let { children } = $props();
 
+  let versions: { gui: string; daemon: string } | null = $state(null);
+
+  $effect(() => {
+    invoke<{ gui: string; daemon: string }>("app_versions")
+      .then((v) => (versions = v))
+      .catch(() => {});
+  });
+
   const nav = [
     { href: "/",       label: "Blobs"   },
     { href: "/receive", label: "Receive" },
-    { href: "/id",      label: "ID"      },
+    { href: "/id",      label: "Your ID" },
     { href: "/rings",   label: "Rings"   },
     { href: "/peers",   label: "Peers"   },
     { href: "/grants",  label: "Grants"  },
@@ -19,7 +28,16 @@
 <div class="flex h-screen flex-col bg-neutral-950 text-neutral-100">
   <!-- Top bar -->
   <header class="flex shrink-0 items-center justify-between border-b border-neutral-800/60 px-4 py-2">
-    <span class="text-xs font-semibold uppercase tracking-widest text-neutral-500">ringdrop</span>
+    <div class="flex items-center gap-2.5">
+      <div class="h-9 w-9 overflow-hidden">
+        <img src="/mascot.png" alt="ringdrop mascot" class="h-9 w-9 translate-y-1 scale-[1.35] object-contain" />
+      </div>
+      <div class="flex flex-col leading-tight">
+        <span class="text-sm font-semibold text-amber-400">ringdrop</span>
+        <span class="text-xs text-neutral-600">gui v{versions?.gui ?? '…'}</span>
+        <span class="text-xs text-neutral-600">daemon v{versions?.daemon ?? '…'}</span>
+      </div>
+    </div>
     <DaemonBadge />
   </header>
 

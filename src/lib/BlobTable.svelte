@@ -1,28 +1,40 @@
 <script lang="ts">
-  import type { BlobRow } from "./types";
-  import { truncateHash } from "./utils";
+  import type { BlobRow, RingRow } from "./types";
   import ConfirmButton from "./ConfirmButton.svelte";
 
   interface Props {
     rows: BlobRow[];
+    rings: RingRow[];
     onDelete: (hash: string) => void;
+    onAttach: (hash: string, ring: RingRow) => void;
+    onDetach: (hash: string, ring: RingRow) => void;
   }
 
-  let { rows, onDelete }: Props = $props();
+  let { rows, rings, onDelete, onAttach, onDetach }: Props = $props();
+
+  let attachingHash: string | null = $state(null);
 
   async function copyTicket(ticket: string) {
     await navigator.clipboard.writeText(ticket);
   }
+
+  function findRing(name: string): RingRow {
+    return rings.find((r) => r.name === name) ?? { name, open: false };
+  }
+
+  function attachableRings(row: BlobRow): RingRow[] {
+    return rings.filter((r) => !row.rings.includes(r.name));
+  }
 </script>
 
 <div class="overflow-x-auto">
-  <table class="w-full text-sm">
+  <table class="table-fixed w-full text-sm">
     <thead>
       <tr class="border-b border-amber-900/40 text-xs uppercase tracking-wider text-neutral-500">
-        <th class="pb-2 text-left font-medium">Name</th>
+        <th class="w-28 pb-2 text-left font-medium">Name</th>
         <th class="pb-2 text-left font-medium">Hash</th>
-        <th class="pb-2 text-left font-medium">Rings</th>
-        <th class="pb-2 text-right font-medium"></th>
+        <th class="w-44 pb-2 text-left font-medium">Rings</th>
+        <th class="w-16 pb-2 text-right font-medium"></th>
       </tr>
     </thead>
     <tbody>
@@ -35,17 +47,50 @@
       {/if}
       {#each rows as row (row.hash)}
         <tr class="group border-b border-neutral-900 transition-colors hover:bg-neutral-900/60">
-          <td class="py-2.5 pr-4 text-neutral-100">{row.name}</td>
-          <td class="py-2.5 pr-4 font-mono text-xs text-neutral-500">
-            {truncateHash(row.hash, 12)}
+          <td class="overflow-hidden break-words py-2.5 pr-4 text-neutral-100">{row.name}</td>
+          <td class="max-w-0 py-2.5 pr-4">
+            <span class="block truncate font-mono text-xs text-neutral-500" title={row.hash}>{row.hash}</span>
           </td>
           <td class="py-2.5 pr-4">
-            {#if row.rings.length === 0}
+            {#if row.rings.length === 0 && attachingHash !== row.hash}
               <span class="text-xs italic text-neutral-700">untagged</span>
-            {:else}
-              {#each row.rings as ring}
-                <span class="mr-1 rounded border border-amber-900/50 bg-amber-950/30 px-1.5 py-0.5 text-xs text-amber-400">{ring}</span>
-              {/each}
+            {/if}
+            {#each row.rings as ringName}
+              <span class="mr-1 inline-flex items-center gap-0.5 rounded border border-amber-900/50 bg-amber-950/30 px-1.5 py-0.5 text-xs text-amber-400">
+                {ringName}
+                <button
+                  onclick={() => onDetach(row.hash, findRing(ringName))}
+                  class="leading-none hover:text-red-400"
+                  aria-label="Detach from {ringName}"
+                >×</button>
+              </span>
+            {/each}
+            {#if attachingHash === row.hash}
+              <select
+                class="rounded border border-amber-900/50 bg-neutral-900 px-1 py-0.5 text-xs text-amber-400"
+                onchange={(e) => {
+                  const ring = attachableRings(row).find((r) => r.name === e.currentTarget.value);
+                  if (ring) { onAttach(row.hash, ring); }
+                  attachingHash = null;
+                }}
+              >
+                <option value="">pick ring…</option>
+                {#each attachableRings(row) as ring}
+                  <option value={ring.name}>{ring.name}</option>
+                {/each}
+              </select>
+              <button
+                onclick={() => (attachingHash = null)}
+                class="ml-1 text-xs text-neutral-600 hover:text-neutral-400"
+                aria-label="Cancel"
+              >×</button>
+            {:else if attachableRings(row).length > 0}
+              <button
+                onclick={() => (attachingHash = row.hash)}
+                class="text-xs text-neutral-600 hover:text-amber-400"
+                aria-label="Attach to ring"
+                title="Attach to ring"
+              >+</button>
             {/if}
           </td>
           <td class="py-2.5 text-right">

@@ -1,10 +1,11 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
-  import type { BlobRow } from "./types";
+  import type { BlobRow, RingRow } from "./types";
   import BlobTable from "./BlobTable.svelte";
 
   let rows: BlobRow[] = $state([]);
+  let rings: RingRow[] = $state([]);
   let loading = $state(false);
   let error: string | null = $state(null);
 
@@ -12,7 +13,10 @@
     loading = true;
     error = null;
     try {
-      rows = await invoke<BlobRow[]>("blob_list");
+      [rows, rings] = await Promise.all([
+        invoke<BlobRow[]>("blob_list"),
+        invoke<RingRow[]>("ring_list"),
+      ]);
     } catch (e) {
       error = String(e);
     } finally {
@@ -42,6 +46,35 @@
     }
   }
 
+  async function handleAttach(hash: string, ring: RingRow) {
+    error = null;
+    try {
+      await invoke("blob_attach", {
+        target: hash,
+        rings: ring.open ? [] : [ring.name],
+        open: ring.open,
+      });
+      await loadBlobs();
+    } catch (e) {
+      error = String(e);
+    }
+  }
+
+  async function handleDetach(hash: string, ring: RingRow) {
+    error = null;
+    try {
+      await invoke("blob_detach", {
+        target: hash,
+        rings: ring.open ? [] : [ring.name],
+        open: ring.open,
+        all: false,
+      });
+      await loadBlobs();
+    } catch (e) {
+      error = String(e);
+    }
+  }
+
   $effect(() => { loadBlobs(); });
 </script>
 
@@ -61,6 +94,6 @@
   {#if loading}
     <p class="text-sm text-neutral-600">Loading…</p>
   {:else}
-    <BlobTable {rows} onDelete={handleDelete} />
+    <BlobTable {rows} {rings} onDelete={handleDelete} onAttach={handleAttach} onDetach={handleDetach} />
   {/if}
 </div>

@@ -1,4 +1,6 @@
-# ringdrop-gui
+<h1 align="center">ringdrop-gui</h1>
+
+<div align="center">
 
 [![CI](https://github.com/rikettsie/ringdrop-gui/actions/workflows/ci.yml/badge.svg)](https://github.com/rikettsie/ringdrop-gui/actions/workflows/ci.yml)
 [![Installers](https://github.com/rikettsie/ringdrop-gui/actions/workflows/release.yml/badge.svg)](https://github.com/rikettsie/ringdrop-gui/actions/workflows/release.yml)
@@ -6,6 +8,10 @@
 [![Latest release](https://img.shields.io/github/v/release/rikettsie/ringdrop-gui)](https://github.com/rikettsie/ringdrop-gui/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-neutral)](https://github.com/rikettsie/ringdrop-gui/releases/latest)
+
+</div>
+
+<img width="35%" align="right" src="https://raw.githubusercontent.com/rikettsie/ringdrop-gui/feat/adjust-views/docs/mascot_gui.png">
 
 Desktop GUI for [ringdrop](https://github.com/rikettsie/ringdrop) — P2P file
 sharing with ring-based access control.

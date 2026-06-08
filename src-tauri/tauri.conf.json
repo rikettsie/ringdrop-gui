@@ -29,7 +29,7 @@
     "licenseFile": "../LICENSE",
     "shortDescription": "Desktop GUI for ringdrop, the P2P file-sharing tool with ring-based access control.",
     "longDescription": "ringdrop-gui connects to a locally running ringdrop daemon and exposes its full feature set as a native desktop UI: browse and share blobs, manage rings and access control, handle peers and grants, and download from tickets with live progress.",
-    "category": "Network",
+    "category": "Utility",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

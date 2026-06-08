@@ -386,6 +386,7 @@ pub async fn receive(
     dest: String,
 ) -> Result<(), String> {
     let client = state.client().ok_or("daemon not configured")?;
+    let mut recv_error: Option<String> = None;
     client
         .send(
             Op::Receive {
@@ -393,17 +394,25 @@ pub async fn receive(
                 dest: PathBuf::from(dest),
                 force_overwrite: false,
             },
-            move |event| {
-                if let EventKind::Progress { done, total } = event.kind {
+            |event| match event.kind {
+                EventKind::Progress { done, total } => {
                     let _ = app.emit(
                         "transfer_progress",
                         serde_json::json!({ "done": done, "total": total }),
                     );
                 }
+                // DaemonClient::send delivers Error through the callback and
+                // still returns Ok(()), so we must capture it manually.
+                EventKind::Error { message } => recv_error = Some(message),
+                _ => {}
             },
         )
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    if let Some(msg) = recv_error {
+        return Err(msg);
+    }
+    Ok(())
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

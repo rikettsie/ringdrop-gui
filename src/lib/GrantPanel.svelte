@@ -1,7 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import type { GrantRow } from "./types";
-  import { truncateHash } from "./utils";
   import ConfirmButton from "./ConfirmButton.svelte";
 
   const PRIVILEGES = ["blob-list"];
@@ -96,12 +95,12 @@
   {/if}
 
   <div class="overflow-x-auto">
-    <table class="w-full text-sm">
+    <table class="table-fixed w-full text-sm">
       <thead>
         <tr class="border-b border-amber-900/40 text-xs uppercase tracking-wider text-neutral-500">
-          <th class="pb-2 text-left font-medium">Privilege</th>
+          <th class="w-28 pb-2 text-left font-medium">Privilege</th>
           <th class="pb-2 text-left font-medium">Peer ID</th>
-          <th class="pb-2 text-right font-medium"></th>
+          <th class="w-8 pb-2 text-right font-medium"></th>
         </tr>
       </thead>
       <tbody>
@@ -117,8 +116,8 @@
             <td class="py-2.5 pr-4">
               <span class="rounded border border-amber-900/50 bg-amber-950/30 px-1.5 py-0.5 text-xs text-amber-400">{g.privilege}</span>
             </td>
-            <td class="py-2.5 pr-4 font-mono text-xs text-neutral-500">
-              {truncateHash(g.peer_id, 16)}
+            <td class="max-w-0 py-2.5 pr-4">
+              <span class="block truncate font-mono text-xs text-neutral-500" title={g.peer_id}>{g.peer_id}</span>
             </td>
             <td class="py-2.5 text-right">
               <ConfirmButton label="Revoke?" onConfirm={() => revokePrivilege(g.peer_id, g.privilege)}>

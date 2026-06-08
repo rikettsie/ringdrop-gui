@@ -1,7 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import type { PeerEntry } from "./types";
-  import { truncateHash } from "./utils";
   import ConfirmButton from "./ConfirmButton.svelte";
 
   let peers: PeerEntry[] = $state([]);
@@ -90,12 +89,12 @@
   {/if}
 
   <div class="overflow-x-auto">
-    <table class="w-full text-sm">
+    <table class="table-fixed w-full text-sm">
       <thead>
         <tr class="border-b border-amber-900/40 text-xs uppercase tracking-wider text-neutral-500">
-          <th class="pb-2 text-left font-medium">Nickname</th>
+          <th class="w-28 pb-2 text-left font-medium">Nickname</th>
           <th class="pb-2 text-left font-medium">Peer ID</th>
-          <th class="pb-2 text-right font-medium"></th>
+          <th class="w-8 pb-2 text-right font-medium"></th>
         </tr>
       </thead>
       <tbody>
@@ -111,8 +110,8 @@
             <td class="py-2.5 pr-4 text-neutral-200">
               {#if p.nickname}{p.nickname}{:else}<span class="italic text-neutral-600">—</span>{/if}
             </td>
-            <td class="py-2.5 pr-4 font-mono text-xs text-neutral-500">
-              {truncateHash(p.peer_id, 16)}
+            <td class="max-w-0 py-2.5 pr-4">
+              <span class="block truncate font-mono text-xs text-neutral-500" title={p.peer_id}>{p.peer_id}</span>
             </td>
             <td class="py-2.5 text-right">
               <ConfirmButton label="Remove?" onConfirm={() => removePeer(p.peer_id)}>

@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { BlobRow, RingRow } from "./types";
-  import { truncateHash } from "./utils";
   import ConfirmButton from "./ConfirmButton.svelte";
 
   interface Props {
@@ -29,13 +28,13 @@
 </script>
 
 <div class="overflow-x-auto">
-  <table class="w-full text-sm">
+  <table class="table-fixed w-full text-sm">
     <thead>
       <tr class="border-b border-amber-900/40 text-xs uppercase tracking-wider text-neutral-500">
-        <th class="pb-2 text-left font-medium">Name</th>
+        <th class="w-28 pb-2 text-left font-medium">Name</th>
         <th class="pb-2 text-left font-medium">Hash</th>
-        <th class="pb-2 text-left font-medium">Rings</th>
-        <th class="pb-2 text-right font-medium"></th>
+        <th class="w-44 pb-2 text-left font-medium">Rings</th>
+        <th class="w-16 pb-2 text-right font-medium"></th>
       </tr>
     </thead>
     <tbody>
@@ -49,8 +48,8 @@
       {#each rows as row (row.hash)}
         <tr class="group border-b border-neutral-900 transition-colors hover:bg-neutral-900/60">
           <td class="py-2.5 pr-4 text-neutral-100">{row.name}</td>
-          <td class="py-2.5 pr-4 font-mono text-xs text-neutral-500">
-            {truncateHash(row.hash, 12)}
+          <td class="max-w-0 py-2.5 pr-4">
+            <span class="block truncate font-mono text-xs text-neutral-500" title={row.hash}>{row.hash}</span>
           </td>
           <td class="py-2.5 pr-4">
             {#if row.rings.length === 0 && attachingHash !== row.hash}

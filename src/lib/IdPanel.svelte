@@ -13,6 +13,7 @@
       peerId = await invoke<string>("node_id");
       qrSvg = await QRCode.toString(peerId, {
         type: "svg",
+        width: 160,
         margin: 1,
         color: { dark: "#f59e0b", light: "#0a0a0a" },
       });

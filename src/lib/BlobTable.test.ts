@@ -38,9 +38,9 @@ describe("BlobTable", () => {
     expect(getByText("photo.jpg")).toBeTruthy();
   });
 
-  it("shows truncated hash", () => {
-    const { getByText } = render(BlobTable, { props: defaultProps });
-    expect(getByText("aaaa1111bbbb…")).toBeTruthy();
+  it("shows full hash", () => {
+    const { getByTitle } = render(BlobTable, { props: defaultProps });
+    expect(getByTitle(rows[0].hash)).toBeTruthy();
   });
 
   it("shows ring badge", () => {

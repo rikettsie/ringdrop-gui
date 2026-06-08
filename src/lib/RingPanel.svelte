@@ -1,7 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import type { RingRow, PeerEntry } from "./types";
-  import { truncateHash } from "./utils";
   import ConfirmButton from "./ConfirmButton.svelte";
 
   let rings: RingRow[] = $state([]);
@@ -170,12 +169,12 @@
         <div class="flex flex-col gap-1">
           {#each members as m (m.peer_id)}
             <div class="flex items-center justify-between rounded border border-neutral-900 bg-neutral-900/40 px-3 py-2">
-              <div class="flex flex-col">
+              <div class="flex min-w-0 flex-col">
                 {#if m.nickname}
                   <span class="text-sm text-neutral-200">{m.nickname}</span>
-                  <span class="font-mono text-xs text-neutral-600">{truncateHash(m.peer_id, 16)}</span>
+                  <span class="block truncate font-mono text-xs text-neutral-600" title={m.peer_id}>{m.peer_id}</span>
                 {:else}
-                  <span class="font-mono text-sm text-neutral-400">{truncateHash(m.peer_id, 16)}</span>
+                  <span class="block truncate font-mono text-sm text-neutral-400" title={m.peer_id}>{m.peer_id}</span>
                 {/if}
               </div>
               <ConfirmButton label="Remove?" onConfirm={() => removePeer(m.peer_id)}>

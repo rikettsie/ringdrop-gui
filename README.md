@@ -11,7 +11,7 @@
 
 </div>
 
-<img width="35%" align="right" src="https://raw.githubusercontent.com/rikettsie/ringdrop-gui/main/docs/mascot_gui.png">
+<img width="35%" align="right" src="https://raw.githubusercontent.com/rikettsie/ringdrop-gui/feat/adjust-views/docs/mascot_gui.png">
 
 Desktop GUI for [ringdrop](https://github.com/rikettsie/ringdrop) — P2P file
 sharing with ring-based access control.

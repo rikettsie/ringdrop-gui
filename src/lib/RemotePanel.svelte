@@ -3,7 +3,7 @@
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import type { RemoteBlobRow } from "./types";
-  import { truncateHash, formatBytes } from "./utils";
+  import { formatBytes } from "./utils";
 
   interface Progress { done: number; total: number }
 
@@ -84,19 +84,21 @@
 
   {#if blobs.length > 0}
     <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="table-fixed w-full text-sm">
         <thead>
           <tr class="border-b border-amber-900/40 text-xs uppercase tracking-wider text-neutral-500">
-            <th class="pb-2 text-left font-medium">Name</th>
+            <th class="w-28 pb-2 text-left font-medium">Name</th>
             <th class="pb-2 text-left font-medium">Hash</th>
-            <th class="pb-2 text-right font-medium"></th>
+            <th class="w-32 pb-2 text-right font-medium"></th>
           </tr>
         </thead>
         <tbody>
           {#each blobs as row (row.hash)}
             <tr class="border-b border-neutral-900 hover:bg-neutral-900/50">
               <td class="py-2.5 pr-4 text-neutral-100">{row.name}</td>
-              <td class="py-2.5 pr-4 font-mono text-xs text-neutral-500">{truncateHash(row.hash, 12)}</td>
+              <td class="max-w-0 py-2.5 pr-4">
+                <span class="block truncate font-mono text-xs text-neutral-500" title={row.hash}>{row.hash}</span>
+              </td>
               <td class="py-2.5 text-right">
                 {#if downloading === row.hash}
                   <div class="flex min-w-32 flex-col items-end gap-1">

@@ -20,6 +20,8 @@ Connects to a locally running ringdrop daemon over IPC and exposes the full
 `rdrop` CLI surface as a native UI: browse and share blobs, manage rings and
 peers, grant catalog access, and download from tickets with live progress.
 
+<br clear="right">
+
 ## Architecture
 
 ```mermaid

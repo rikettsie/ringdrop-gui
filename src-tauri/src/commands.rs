@@ -108,6 +108,27 @@ pub fn app_versions() -> AppVersions {
     }
 }
 
+/// Runs `rdrop --version` and returns the parsed version string.
+///
+/// # Errors
+/// Returns an error if `rdrop` is not found in `PATH` or its output cannot be
+/// parsed. The caller should treat this as a soft failure (warn, don't block).
+#[tauri::command]
+pub fn rdrop_cli_version() -> Result<String, String> {
+    let output = std::process::Command::new("rdrop")
+        .arg("--version")
+        .output()
+        .map_err(|e| format!("rdrop not found in PATH: {e}"))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // clap default format: "rdrop X.Y.Z"
+    stdout
+        .split_whitespace()
+        .nth(1)
+        .map(|s| s.trim().to_string())
+        .ok_or_else(|| format!("unexpected rdrop --version output: {stdout}"))
+}
+
 /// Returns whether the ringdrop daemon is reachable and the configured port.
 ///
 /// Called by `DaemonBadge` on a polling interval. Safe to call when no config

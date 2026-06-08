@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-06-08
+
+### Bug Fixes
+
+- (**docs**) Ensure the mermaid schema inside its section
+- Use ringdrop-gui as product name for generated bundles
+
 ## [0.2.0] - 2026-06-08
 
 ### Bug Fixes

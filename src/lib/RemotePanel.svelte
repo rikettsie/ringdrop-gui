@@ -12,6 +12,7 @@
   let loading = $state(false);
   let error: string | null = $state(null);
 
+  let fetched = $state(false);
   let downloading: string | null = $state(null);
   let progress: Progress = $state({ done: 0, total: 0 });
   let downloadDone: string | null = $state(null);
@@ -26,12 +27,14 @@
     loading = true;
     blobs = [];
     error = null;
+    fetched = false;
     try {
       blobs = await invoke<RemoteBlobRow[]>("remote_blob_list", { peer });
     } catch (e) {
       error = String(e);
     } finally {
       loading = false;
+      fetched = true;
     }
   }
 
@@ -124,7 +127,7 @@
         </tbody>
       </table>
     </div>
-  {:else if !loading && peerId.trim()}
-    <p class="text-sm italic text-neutral-700">No accessible blobs from this peer.</p>
+  {:else if fetched && !loading && !error}
+    <p class="text-sm italic text-neutral-600">No accessible blobs on remote node.</p>
   {/if}
 </div>

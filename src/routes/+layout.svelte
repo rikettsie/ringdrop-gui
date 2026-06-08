@@ -7,10 +7,29 @@
   let { children } = $props();
 
   let versions: { gui: string; daemon: string } | null = $state(null);
+  let cliVersion: string | null = $state(null);
+
+  // major.minor must match — pre-1.0 minor bumps can be breaking
+  function compatibleVersions(compiled: string, cli: string): boolean {
+    const [cMaj, cMin] = compiled.split(".").map(Number);
+    const [rMaj, rMin] = cli.split(".").map(Number);
+    return cMaj === rMaj && cMin === rMin;
+  }
+
+  let versionMismatch = $derived.by(() => {
+    if (!versions || !cliVersion) return false;
+    return !compatibleVersions(versions.daemon, cliVersion);
+  });
 
   $effect(() => {
-    invoke<{ gui: string; daemon: string }>("app_versions")
-      .then((v) => (versions = v))
+    Promise.all([
+      invoke<{ gui: string; daemon: string }>("app_versions"),
+      invoke<string>("rdrop_cli_version").catch(() => null),
+    ])
+      .then(([v, cli]) => {
+        versions = v;
+        cliVersion = cli;
+      })
       .catch(() => {});
   });
 
@@ -40,6 +59,12 @@
     </div>
     <DaemonBadge />
   </header>
+
+  {#if versionMismatch}
+    <div class="shrink-0 border-b border-amber-900/60 bg-amber-950/40 px-4 py-1.5 text-xs text-amber-400">
+      Version mismatch: GUI compiled against ringdrop {versions!.daemon}, but <code class="font-mono">rdrop --version</code> reports {cliVersion}. Some features may not work correctly.
+    </div>
+  {/if}
 
   <div class="flex min-h-0 flex-1">
     <!-- Sidebar -->

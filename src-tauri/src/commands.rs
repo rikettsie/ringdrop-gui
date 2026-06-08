@@ -156,6 +156,57 @@ pub async fn blob_remove(state: State<'_, AppState>, target: String) -> Result<(
     state.execute(Op::BlobRemove { target }).await
 }
 
+/// Attaches a blob to the given rings (or the open ring).
+///
+/// `target` is a BLAKE3 hex hash or a file path previously imported.
+/// Set `open` to `true` to make the blob publicly accessible, overriding `rings`.
+///
+/// # Errors
+///
+/// Returns an error if the daemon is not configured or the operation fails.
+#[tauri::command]
+pub async fn blob_attach(
+    state: State<'_, AppState>,
+    target: String,
+    rings: Vec<String>,
+    open: bool,
+) -> Result<(), String> {
+    state
+        .execute(Op::BlobAttach {
+            target,
+            rings,
+            open,
+        })
+        .await
+}
+
+/// Removes ring associations from a blob.
+///
+/// `target` is a BLAKE3 hex hash or a file path previously imported.
+/// Set `open` to remove the open-ring association only.
+/// Set `all` to strip every ring association.
+///
+/// # Errors
+///
+/// Returns an error if the daemon is not configured or the operation fails.
+#[tauri::command]
+pub async fn blob_detach(
+    state: State<'_, AppState>,
+    target: String,
+    rings: Vec<String>,
+    open: bool,
+    all: bool,
+) -> Result<(), String> {
+    state
+        .execute(Op::BlobDetach {
+            target,
+            rings,
+            open,
+            all,
+        })
+        .await
+}
+
 /// Lists all rings in the local registry.
 #[tauri::command]
 pub async fn ring_list(state: State<'_, AppState>) -> Result<Vec<RingRow>, String> {

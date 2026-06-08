@@ -15,6 +15,8 @@ pub fn run() {
             commands::blob_list,
             commands::blob_import,
             commands::blob_remove,
+            commands::blob_attach,
+            commands::blob_detach,
             commands::receive,
             commands::node_id,
             commands::ring_list,

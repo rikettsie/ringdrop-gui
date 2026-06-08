@@ -4772,7 +4772,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -5071,9 +5071,9 @@ dependencies = [
 
 [[package]]
 name = "ringdrop"
-version = "0.12.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1612f9d7b804e2b83a658be77376fc092880c29d61547ea42c066ce05a480e5f"
+checksum = "659eb22bb40980a969b3ac8e4a02d6c267b18fb471fa4578bd472e8b5bc0c9bf"
 dependencies = [
  "anyhow",
  "bao-tree",

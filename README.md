@@ -20,7 +20,12 @@ Connects to a locally running ringdrop daemon over IPC and exposes the full
 `rdrop` CLI surface as a native UI: browse and share blobs, manage rings and
 peers, grant catalog access, and download from tickets with live progress.
 
-<br clear="right">
+## Ecosystem
+
+| Project | Role |
+|---|---|
+| [ringdrop](https://github.com/rikettsie/ringdrop) | The daemon — `rdrop` CLI and this GUI are both IPC clients for the same daemon |
+| [iroh-rings](https://github.com/rikettsie/iroh-rings) | Reusable library providing the ring-based access-control protocol used by the daemon |
 
 <img width="80%" src="docs/assets/ringdrop_gui_screenshot_1.jpg">
 

@@ -95,6 +95,15 @@ pub struct RemoteBlobRow {
     pub name: String,
     /// `rdrop://…` share ticket.
     pub ticket: String,
+    /// Human-readable kind string, e.g. `"file"` or `"dir, 3 files"`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    /// Number of files in a directory blob, if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<u64>,
+    /// Total size in bytes, if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size_bytes: Option<u64>,
 }
 
 /// GUI and daemon version numbers, baked in at compile time.
@@ -557,6 +566,23 @@ mod tests {
             "hash": "abc", "name": "video.mp4", "ticket": "rdrop://abc"
         }))]);
         assert_eq!(rows[0].name, "video.mp4");
+        assert_eq!(rows[0].kind, None);
+        assert_eq!(rows[0].size_bytes, None);
+    }
+
+    #[test]
+    fn collect_records_deserializes_remote_blob_rows_with_rich_fields() {
+        let rows: Vec<RemoteBlobRow> = collect_records(vec![rec(json!({
+            "hash": "abc",
+            "name": "photos",
+            "ticket": "rdrop://abc",
+            "kind": "dir, 5 files",
+            "file_count": 5,
+            "size_bytes": 2097152,
+        }))]);
+        assert_eq!(rows[0].kind.as_deref(), Some("dir, 5 files"));
+        assert_eq!(rows[0].file_count, Some(5));
+        assert_eq!(rows[0].size_bytes, Some(2097152));
     }
 
     #[test]

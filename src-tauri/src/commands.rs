@@ -463,6 +463,36 @@ mod tests {
             "hash": "abc", "name": "f.txt", "rings": ["x"], "ticket": "rdrop://t"
         }))]);
         assert_eq!(rows[0].rings, vec!["x"]);
+        assert_eq!(rows[0].kind, None);
+        assert_eq!(rows[0].size_bytes, None);
+    }
+
+    #[test]
+    fn collect_records_deserializes_blob_rows_with_rich_fields() {
+        let rows: Vec<BlobRow> = collect_records(vec![rec(json!({
+            "hash": "abc",
+            "name": "photos",
+            "rings": [],
+            "ticket": "rdrop://t",
+            "kind": "dir, 3 files",
+            "file_count": 3,
+            "size_bytes": 1048576,
+        }))]);
+        assert_eq!(rows[0].kind.as_deref(), Some("dir, 3 files"));
+        assert_eq!(rows[0].file_count, Some(3));
+        assert_eq!(rows[0].size_bytes, Some(1048576));
+    }
+
+    #[test]
+    fn collect_records_ignores_file_progress_events() {
+        let rows: Vec<BlobRow> = collect_records(vec![EventKind::FileProgress {
+            file_index: 1,
+            file_total: 3,
+            file_name: "readme.txt".into(),
+            done: 512,
+            total: 1024,
+        }]);
+        assert!(rows.is_empty());
     }
 
     #[test]

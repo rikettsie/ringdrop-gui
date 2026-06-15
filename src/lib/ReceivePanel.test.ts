@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, cleanup, fireEvent } from "@testing-library/svelte";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, fireEvent } from "@testing-library/svelte";
 import ReceivePanel from "./ReceivePanel.svelte";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -15,8 +15,10 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
 }));
 
 const { invoke } = await import("@tauri-apps/api/core");
+const { listen } = await import("@tauri-apps/api/event");
 const { open: openDialog } = await import("@tauri-apps/plugin-dialog");
 const mockInvoke = vi.mocked(invoke);
+const mockListen = vi.mocked(listen);
 const mockOpen = vi.mocked(openDialog);
 
 
@@ -73,5 +75,48 @@ describe("ReceivePanel", () => {
     await fireEvent.click(getByText("Browse"));
     await fireEvent.click(await findByText("Download"));
     expect(await findByText(/connection refused/)).toBeTruthy();
+  });
+
+  it("shows file name when a FileProgress event arrives", async () => {
+    // Capture the progress callback so we can fire it manually.
+    let progressCb: ((ev: { payload: Record<string, unknown> }) => void) | null = null;
+    mockListen.mockImplementationOnce(async (_channel, cb) => {
+      progressCb = cb as typeof progressCb;
+      return () => {};
+    });
+    // Keep the download pending so we can inspect the in-flight state.
+    let finishDownload!: () => void;
+    mockInvoke.mockImplementationOnce(() => new Promise<void>(res => { finishDownload = res; }));
+
+    const { getByPlaceholderText, getByText, findByText } = render(ReceivePanel);
+    await fireEvent.input(getByPlaceholderText("rdrop://…"), { target: { value: "rdrop://abc" } });
+    await fireEvent.click(getByText("Browse"));
+    await fireEvent.click(await findByText("Download"));
+
+    // Flush microtasks so `await listen(...)` has resolved and the callback is captured.
+    await new Promise(r => setTimeout(r, 0));
+    expect(progressCb).not.toBeNull();
+
+    progressCb!({ payload: { done: 512, total: 1024, file_index: 2, file_total: 5, file_name: "notes.txt" } });
+
+    expect(await findByText(/notes\.txt/)).toBeTruthy();
+    expect(await findByText(/2\/5/)).toBeTruthy();
+
+    finishDownload();
+  });
+
+  it("does not show file name line when no FileProgress has arrived", async () => {
+    let finishDownload!: () => void;
+    mockInvoke.mockImplementationOnce(() => new Promise<void>(res => { finishDownload = res; }));
+
+    const { getByPlaceholderText, getByText, findByText, queryByText } = render(ReceivePanel);
+    await fireEvent.input(getByPlaceholderText("rdrop://…"), { target: { value: "rdrop://abc" } });
+    await fireEvent.click(getByText("Browse"));
+    await fireEvent.click(await findByText("Download"));
+
+    await new Promise(r => setTimeout(r, 0));
+    expect(queryByText(/File \d+\/\d+/)).toBeNull();
+
+    finishDownload();
   });
 });

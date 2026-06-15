@@ -5,7 +5,13 @@
   import type { RemoteBlobRow } from "./types";
   import { formatBytes } from "./utils";
 
-  interface Progress { done: number; total: number }
+  interface Progress {
+    done: number;
+    total: number;
+    file_index?: number;
+    file_total?: number;
+    file_name?: string;
+  }
 
   let peerId = $state("");
   let blobs: RemoteBlobRow[] = $state([]);
@@ -107,7 +113,16 @@
         <tbody>
           {#each blobs as row (row.hash)}
             <tr class="border-b border-neutral-900 hover:bg-neutral-900/50">
-              <td class="overflow-hidden break-words py-2.5 pr-4 text-neutral-100">{row.name}</td>
+              <td class="overflow-hidden break-words py-2.5 pr-4 text-neutral-100">
+                {row.name}
+                {#if row.kind || row.size_bytes != null}
+                  <span class="block text-xs text-neutral-600">
+                    {[row.kind, row.size_bytes != null ? formatBytes(row.size_bytes) : null]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                {/if}
+              </td>
               <td class="max-w-0 py-2.5 pr-4">
                 <span class="block truncate font-mono text-xs text-neutral-500" title={row.hash}>{row.hash}</span>
               </td>
@@ -133,6 +148,14 @@
                           ? `${formatBytes(progresses[row.hash].done)} / ${formatBytes(progresses[row.hash].total)}`
                           : "Connecting…"}
                       </span>
+                      {#if progresses[row.hash]?.file_name}
+                        <span class="block truncate text-xs text-neutral-700" title={progresses[row.hash].file_name}>
+                          {#if progresses[row.hash].file_index != null && progresses[row.hash].file_total != null}
+                            {progresses[row.hash].file_index}/{progresses[row.hash].file_total}
+                          {/if}
+                          {progresses[row.hash].file_name}
+                        </span>
+                      {/if}
                     </div>
                   {/if}
                 </div>

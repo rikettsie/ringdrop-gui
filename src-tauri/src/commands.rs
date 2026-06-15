@@ -35,6 +35,15 @@ pub struct BlobRow {
     pub rings: Vec<String>,
     /// `rdrop://…` share ticket.
     pub ticket: String,
+    /// Human-readable kind string, e.g. `"file"` or `"dir, 3 files"`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    /// Number of files in a directory blob (`HashSeq`), if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<u64>,
+    /// Total size in bytes, if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size_bytes: Option<u64>,
 }
 
 /// Result returned after a successful import.
@@ -86,6 +95,15 @@ pub struct RemoteBlobRow {
     pub name: String,
     /// `rdrop://…` share ticket.
     pub ticket: String,
+    /// Human-readable kind string, e.g. `"file"` or `"dir, 3 files"`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    /// Number of files in a directory blob, if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<u64>,
+    /// Total size in bytes, if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size_bytes: Option<u64>,
 }
 
 /// GUI and daemon version numbers, baked in at compile time.
@@ -403,6 +421,24 @@ pub async fn receive(
                         serde_json::json!({ "done": done, "total": total }),
                     );
                 }
+                EventKind::FileProgress {
+                    file_index,
+                    file_total,
+                    ref file_name,
+                    done,
+                    total,
+                } => {
+                    let _ = app.emit(
+                        &format!("transfer_progress/{hash}"),
+                        serde_json::json!({
+                            "done": done,
+                            "total": total,
+                            "file_index": file_index,
+                            "file_total": file_total,
+                            "file_name": file_name,
+                        }),
+                    );
+                }
                 // DaemonClient::send delivers Error through the callback and
                 // still returns Ok(()), so we must capture it manually.
                 EventKind::Error { message } => recv_error = Some(message),
@@ -436,6 +472,36 @@ mod tests {
             "hash": "abc", "name": "f.txt", "rings": ["x"], "ticket": "rdrop://t"
         }))]);
         assert_eq!(rows[0].rings, vec!["x"]);
+        assert_eq!(rows[0].kind, None);
+        assert_eq!(rows[0].size_bytes, None);
+    }
+
+    #[test]
+    fn collect_records_deserializes_blob_rows_with_rich_fields() {
+        let rows: Vec<BlobRow> = collect_records(vec![rec(json!({
+            "hash": "abc",
+            "name": "photos",
+            "rings": [],
+            "ticket": "rdrop://t",
+            "kind": "dir, 3 files",
+            "file_count": 3,
+            "size_bytes": 1048576,
+        }))]);
+        assert_eq!(rows[0].kind.as_deref(), Some("dir, 3 files"));
+        assert_eq!(rows[0].file_count, Some(3));
+        assert_eq!(rows[0].size_bytes, Some(1048576));
+    }
+
+    #[test]
+    fn collect_records_ignores_file_progress_events() {
+        let rows: Vec<BlobRow> = collect_records(vec![EventKind::FileProgress {
+            file_index: 1,
+            file_total: 3,
+            file_name: "readme.txt".into(),
+            done: 512,
+            total: 1024,
+        }]);
+        assert!(rows.is_empty());
     }
 
     #[test]
@@ -500,6 +566,23 @@ mod tests {
             "hash": "abc", "name": "video.mp4", "ticket": "rdrop://abc"
         }))]);
         assert_eq!(rows[0].name, "video.mp4");
+        assert_eq!(rows[0].kind, None);
+        assert_eq!(rows[0].size_bytes, None);
+    }
+
+    #[test]
+    fn collect_records_deserializes_remote_blob_rows_with_rich_fields() {
+        let rows: Vec<RemoteBlobRow> = collect_records(vec![rec(json!({
+            "hash": "abc",
+            "name": "photos",
+            "ticket": "rdrop://abc",
+            "kind": "dir, 5 files",
+            "file_count": 5,
+            "size_bytes": 2097152,
+        }))]);
+        assert_eq!(rows[0].kind.as_deref(), Some("dir, 5 files"));
+        assert_eq!(rows[0].file_count, Some(5));
+        assert_eq!(rows[0].size_bytes, Some(2097152));
     }
 
     #[test]

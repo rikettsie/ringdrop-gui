@@ -108,4 +108,28 @@ describe("BlobTable", () => {
     await fireEvent.change(select, { target: { value: "work" } });
     expect(onAttach).toHaveBeenCalledWith(rows[0].hash, rings[1]);
   });
+
+  it("shows kind sub-line when kind is provided", () => {
+    const enrichedRows = [{ ...rows[0], kind: "file" }];
+    const { getByText } = render(BlobTable, { props: { ...defaultProps, rows: enrichedRows } });
+    expect(getByText("file")).toBeTruthy();
+  });
+
+  it("shows formatted size sub-line when size_bytes is provided", () => {
+    const enrichedRows = [{ ...rows[0], size_bytes: 1048576 }];
+    const { getByText } = render(BlobTable, { props: { ...defaultProps, rows: enrichedRows } });
+    expect(getByText("1.0 MB")).toBeTruthy();
+  });
+
+  it("shows kind and size joined by · when both are provided", () => {
+    const enrichedRows = [{ ...rows[0], kind: "dir, 3 files", size_bytes: 3145728 }];
+    const { getByText } = render(BlobTable, { props: { ...defaultProps, rows: enrichedRows } });
+    expect(getByText("dir, 3 files · 3.0 MB")).toBeTruthy();
+  });
+
+  it("shows no kind/size sub-line when neither field is present", () => {
+    const { queryByText } = render(BlobTable, { props: defaultProps });
+    // Default rows have no kind/size_bytes — no · separator should appear.
+    expect(queryByText(/·/)).toBeNull();
+  });
 });

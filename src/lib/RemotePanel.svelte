@@ -5,7 +5,13 @@
   import type { RemoteBlobRow } from "./types";
   import { formatBytes } from "./utils";
 
-  interface Progress { done: number; total: number }
+  interface Progress {
+    done: number;
+    total: number;
+    file_index?: number;
+    file_total?: number;
+    file_name?: string;
+  }
 
   let peerId = $state("");
   let blobs: RemoteBlobRow[] = $state([]);
@@ -133,6 +139,14 @@
                           ? `${formatBytes(progresses[row.hash].done)} / ${formatBytes(progresses[row.hash].total)}`
                           : "Connecting…"}
                       </span>
+                      {#if progresses[row.hash]?.file_name}
+                        <span class="block truncate text-xs text-neutral-700" title={progresses[row.hash].file_name}>
+                          {#if progresses[row.hash].file_index != null && progresses[row.hash].file_total != null}
+                            {progresses[row.hash].file_index}/{progresses[row.hash].file_total}
+                          {/if}
+                          {progresses[row.hash].file_name}
+                        </span>
+                      {/if}
                     </div>
                   {/if}
                 </div>

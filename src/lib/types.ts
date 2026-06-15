@@ -4,6 +4,12 @@ export interface BlobRow {
   name: string;
   rings: string[];
   ticket: string;
+  /** e.g. `"file"` or `"dir, 3 files"` — absent for blobs from older daemons. */
+  kind?: string;
+  /** Number of files in a directory blob, if available. */
+  file_count?: number | null;
+  /** Total size in bytes, if available. */
+  size_bytes?: number | null;
 }
 
 /** Result returned after a successful import. */

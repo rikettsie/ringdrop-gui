@@ -35,6 +35,15 @@ pub struct BlobRow {
     pub rings: Vec<String>,
     /// `rdrop://…` share ticket.
     pub ticket: String,
+    /// Human-readable kind string, e.g. `"file"` or `"dir, 3 files"`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    /// Number of files in a directory blob (`HashSeq`), if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_count: Option<u64>,
+    /// Total size in bytes, if known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size_bytes: Option<u64>,
 }
 
 /// Result returned after a successful import.
@@ -401,6 +410,24 @@ pub async fn receive(
                     let _ = app.emit(
                         &format!("transfer_progress/{hash}"),
                         serde_json::json!({ "done": done, "total": total }),
+                    );
+                }
+                EventKind::FileProgress {
+                    file_index,
+                    file_total,
+                    ref file_name,
+                    done,
+                    total,
+                } => {
+                    let _ = app.emit(
+                        &format!("transfer_progress/{hash}"),
+                        serde_json::json!({
+                            "done": done,
+                            "total": total,
+                            "file_index": file_index,
+                            "file_total": file_total,
+                            "file_name": file_name,
+                        }),
                     );
                 }
                 // DaemonClient::send delivers Error through the callback and

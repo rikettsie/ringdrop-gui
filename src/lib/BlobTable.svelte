@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { BlobRow, RingRow } from "./types";
   import ConfirmButton from "./ConfirmButton.svelte";
+  import { formatBytes } from "./utils";
 
   interface Props {
     rows: BlobRow[];
@@ -47,7 +48,16 @@
       {/if}
       {#each rows as row (row.hash)}
         <tr class="group border-b border-neutral-900 transition-colors hover:bg-neutral-900/60">
-          <td class="overflow-hidden break-words py-2.5 pr-4 text-neutral-100">{row.name}</td>
+          <td class="overflow-hidden break-words py-2.5 pr-4 text-neutral-100">
+            {row.name}
+            {#if row.kind || row.size_bytes != null}
+              <span class="block text-xs text-neutral-600">
+                {[row.kind, row.size_bytes != null ? formatBytes(row.size_bytes) : null]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            {/if}
+          </td>
           <td class="max-w-0 py-2.5 pr-4">
             <span class="block truncate font-mono text-xs text-neutral-500" title={row.hash}>{row.hash}</span>
           </td>

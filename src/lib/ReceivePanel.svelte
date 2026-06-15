@@ -4,11 +4,22 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { formatBytes } from "./utils";
 
+  interface ProgressPayload {
+    done: number;
+    total: number;
+    file_index?: number;
+    file_total?: number;
+    file_name?: string;
+  }
+
   let ticket = $state("");
   let dest = $state("");
   let downloading = $state(false);
   let done = $state(0);
   let total = $state(0);
+  let fileName: string | null = $state(null);
+  let fileIndex: number | null = $state(null);
+  let fileTotal: number | null = $state(null);
   let error: string | null = $state(null);
   let success = $state(false);
 
@@ -25,19 +36,28 @@
     downloading = true;
     done = 0;
     total = 0;
+    fileName = null;
+    fileIndex = null;
+    fileTotal = null;
     error = null;
     success = false;
 
-    const unlisten: UnlistenFn = await listen<{ done: number; total: number }>(
-      "transfer_progress",
+    // A random channel ID namespaces the progress events for this download.
+    const channelId = crypto.randomUUID();
+
+    const unlisten: UnlistenFn = await listen<ProgressPayload>(
+      `transfer_progress/${channelId}`,
       (ev) => {
         done = ev.payload.done;
         total = ev.payload.total;
+        fileName = ev.payload.file_name ?? null;
+        fileIndex = ev.payload.file_index ?? null;
+        fileTotal = ev.payload.file_total ?? null;
       },
     );
 
     try {
-      await invoke("receive", { ticket: ticket.trim(), dest });
+      await invoke("receive", { ticket: ticket.trim(), dest, hash: channelId });
       success = true;
     } catch (e) {
       error = String(e);
@@ -108,6 +128,14 @@
           Connecting…
         {/if}
       </p>
+      {#if fileName}
+        <p class="text-xs text-neutral-600">
+          {#if fileIndex != null && fileTotal != null}
+            File {fileIndex}/{fileTotal}:
+          {/if}
+          {fileName}
+        </p>
+      {/if}
     </div>
   {/if}
 

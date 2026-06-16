@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-06-16
+
+### Refactoring
+
+- (**deps**) Update to ringdrop 0.17.0 using iroh 1.0.0
+
 ## [0.4.0] - 2026-06-15
 
 ### Documentation

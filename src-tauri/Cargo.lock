@@ -5118,9 +5118,9 @@ dependencies = [
 
 [[package]]
 name = "ringdrop"
-version = "0.17.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a101860d2aa13d39def26d4f654a9f2faf37bad3fec92e10a0ac3c3f38a67c94"
+checksum = "bdb2547fab6103bfd0a03818705d2e2856497d75221ba7f1267fe0487a0fdc28"
 dependencies = [
  "anyhow",
  "bao-tree",

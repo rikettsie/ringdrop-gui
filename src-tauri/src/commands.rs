@@ -387,7 +387,16 @@ pub async fn node_id(state: State<'_, AppState>) -> Result<String, String> {
         .ok_or_else(|| "daemon returned no peer_id record".into())
 }
 
-/// Downloads the blob described by `ticket` into `dest`.
+/// Maps the destination field of the receive form to the daemon's optional destination.
+///
+/// An empty (or whitespace-only) field means "no destination", so the daemon falls back
+/// to `default_receive_dir` from its `config.json`, then to its current directory.
+fn dest_from_field(dest: String) -> Option<PathBuf> {
+    (!dest.trim().is_empty()).then(|| PathBuf::from(dest))
+}
+
+/// Downloads the blob described by `ticket` into `dest`, or into the daemon's
+/// default receive directory when `dest` is empty.
 ///
 /// Progress is streamed to the frontend as `"transfer_progress"` events with
 /// payload `{ done: u64, total: u64 }`.
@@ -410,7 +419,7 @@ pub async fn receive(
         .send(
             Op::Receive {
                 ticket,
-                dest: PathBuf::from(dest),
+                dest: dest_from_field(dest),
                 force_overwrite: false,
             },
             |event| match event.kind {
@@ -464,6 +473,20 @@ mod tests {
 
     fn rec(value: serde_json::Value) -> EventKind {
         EventKind::Record { value }
+    }
+
+    #[test]
+    fn dest_from_field_keeps_a_non_empty_path() {
+        assert_eq!(
+            dest_from_field("/tmp/downloads".into()),
+            Some(PathBuf::from("/tmp/downloads"))
+        );
+    }
+
+    #[test]
+    fn dest_from_field_maps_empty_and_blank_to_none() {
+        assert_eq!(dest_from_field(String::new()), None);
+        assert_eq!(dest_from_field("   ".into()), None);
     }
 
     #[test]

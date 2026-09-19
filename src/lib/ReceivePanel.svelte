@@ -24,7 +24,7 @@
   let success = $state(false);
 
   let progress = $derived(total > 0 ? done / total : 0);
-  let canDownload = $derived(ticket.trim().length > 0 && dest.length > 0 && !downloading);
+  let canDownload = $derived(ticket.trim().length > 0 && !downloading);
 
   async function pickDest() {
     const path = await openDialog({ directory: true, multiple: false });
@@ -92,7 +92,7 @@
         type="text"
         readonly
         value={dest}
-        placeholder="Pick a directory…"
+        placeholder="Default receive directory"
         class="min-w-0 flex-1 rounded border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-400 placeholder-neutral-700 outline-none"
       />
       <button
@@ -100,6 +100,14 @@
         disabled={downloading}
         class="shrink-0 rounded border border-neutral-700 bg-neutral-800 px-3 py-2 text-xs text-neutral-300 transition-colors hover:border-neutral-600 hover:text-neutral-100 disabled:opacity-50"
       >Browse</button>
+      {#if dest}
+        <button
+          onclick={() => (dest = "")}
+          disabled={downloading}
+          title="Use the daemon's default receive directory"
+          class="shrink-0 rounded border border-neutral-700 bg-neutral-800 px-3 py-2 text-xs text-neutral-300 transition-colors hover:border-neutral-600 hover:text-neutral-100 disabled:opacity-50"
+        >Clear</button>
+      {/if}
     </div>
   </div>
 

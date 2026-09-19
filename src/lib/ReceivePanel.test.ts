@@ -32,6 +32,7 @@ describe("ReceivePanel", () => {
   it("renders ticket input and destination picker", () => {
     const { getByPlaceholderText, getByText } = render(ReceivePanel);
     expect(getByPlaceholderText("rdrop://…")).toBeTruthy();
+    expect(getByPlaceholderText("Default receive directory")).toBeTruthy();
     expect(getByText("Browse")).toBeTruthy();
   });
 
@@ -41,19 +42,69 @@ describe("ReceivePanel", () => {
     expect(btn.disabled).toBe(true);
   });
 
-  it("download button is disabled when only ticket is filled", async () => {
+  it("download button is enabled when only ticket is filled", async () => {
     const { getByPlaceholderText, getByText } = render(ReceivePanel);
     await fireEvent.input(getByPlaceholderText("rdrop://…"), {
       target: { value: "rdrop://abc" },
     });
     const btn = getByText("Download") as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
+    expect(btn.disabled).toBe(false);
+  });
+
+  it("sends an empty destination so the daemon uses its default directory", async () => {
+    const { getByPlaceholderText, findByText } = render(ReceivePanel);
+    await fireEvent.input(getByPlaceholderText("rdrop://…"), {
+      target: { value: "rdrop://abc" },
+    });
+    await fireEvent.click(await findByText("Download"));
+    await findByText("Download complete.");
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "receive",
+      expect.objectContaining({ ticket: "rdrop://abc", dest: "" }),
+    );
+  });
+
+  it("sends the picked directory as destination", async () => {
+    const { getByPlaceholderText, getByText, findByText } = render(ReceivePanel);
+    await fireEvent.input(getByPlaceholderText("rdrop://…"), {
+      target: { value: "rdrop://abc" },
+    });
+    await fireEvent.click(getByText("Browse"));
+    await fireEvent.click(await findByText("Download"));
+    await findByText("Download complete.");
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "receive",
+      expect.objectContaining({ dest: "/home/user/downloads" }),
+    );
   });
 
   it("populates destination after browse", async () => {
     const { getByText, findByDisplayValue } = render(ReceivePanel);
     await fireEvent.click(getByText("Browse"));
     expect(await findByDisplayValue("/home/user/downloads")).toBeTruthy();
+  });
+
+  it("shows the clear button only once a destination is picked", async () => {
+    const { getByText, queryByText, findByText } = render(ReceivePanel);
+    expect(queryByText("Clear")).toBeNull();
+    await fireEvent.click(getByText("Browse"));
+    expect(await findByText("Clear")).toBeTruthy();
+  });
+
+  it("clearing the destination sends an empty one so the daemon default applies", async () => {
+    const { getByPlaceholderText, getByText, findByText, queryByText } = render(ReceivePanel);
+    await fireEvent.input(getByPlaceholderText("rdrop://…"), {
+      target: { value: "rdrop://abc" },
+    });
+    await fireEvent.click(getByText("Browse"));
+    await fireEvent.click(await findByText("Clear"));
+    expect(queryByText("Clear")).toBeNull();
+    await fireEvent.click(await findByText("Download"));
+    await findByText("Download complete.");
+    expect(mockInvoke).toHaveBeenCalledWith(
+      "receive",
+      expect.objectContaining({ dest: "" }),
+    );
   });
 
   it("shows success message after download completes", async () => {

@@ -81,6 +81,44 @@ describe("RingPanel", () => {
     expect(mockInvoke).toHaveBeenCalledWith("ring_add", { ring: "friends", peer: "newpeer123" });
   });
 
+  it("sends expiresInSecs when an expiry is set", async () => {
+    const { findByText, findByLabelText } = render(RingPanel);
+    await fireEvent.click(await findByText("friends"));
+    await fireEvent.click(await findByText("Add peer"));
+    await fireEvent.input(await findByLabelText("Peer ID to add"), { target: { value: "newpeer123" } });
+    await fireEvent.input(await findByLabelText("Expires after"), { target: { value: "2" } });
+    await fireEvent.change(await findByLabelText("Expiry unit"), { target: { value: "604800" } });
+    await fireEvent.click(await findByText("Add"));
+    expect(mockInvoke).toHaveBeenCalledWith("ring_add", {
+      ring: "friends",
+      peer: "newpeer123",
+      expiresInSecs: 2 * 604_800,
+    });
+  });
+
+  it("rejects a non-integer expiry without calling ring_add", async () => {
+    const { findByText, findByLabelText } = render(RingPanel);
+    await fireEvent.click(await findByText("friends"));
+    await fireEvent.click(await findByText("Add peer"));
+    await fireEvent.input(await findByLabelText("Peer ID to add"), { target: { value: "newpeer123" } });
+    await fireEvent.input(await findByLabelText("Expires after"), { target: { value: "1.5" } });
+    await fireEvent.click(await findByText("Add"));
+    expect(await findByText("Expiry must be a positive whole number")).toBeTruthy();
+    expect(mockInvoke).not.toHaveBeenCalledWith("ring_add", expect.anything());
+  });
+
+  it("shows remaining time for an expiring member", async () => {
+    const expiresAt = Math.floor(Date.now() / 1000) + 3 * 3_600;
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === "ring_list")    return TEST_RINGS;
+      if (cmd === "ring_members") return [{ ...TEST_MEMBERS[0], expires_at: expiresAt }];
+      return undefined;
+    });
+    const { findByText } = render(RingPanel);
+    await fireEvent.click(await findByText("friends"));
+    expect(await findByText(/expires in 2h 59m/)).toBeTruthy();
+  });
+
   it("shows remove confirmation on remove button click", async () => {
     const { findByText, findByLabelText } = render(RingPanel);
     await fireEvent.click(await findByText("friends"));

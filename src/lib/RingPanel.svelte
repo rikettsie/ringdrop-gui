@@ -2,6 +2,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import type { RingRow, PeerEntry } from "./types";
   import ConfirmButton from "./ConfirmButton.svelte";
+  import { EXPIRY_UNITS, formatRemaining } from "./utils";
 
   let rings: RingRow[] = $state([]);
   let selected: RingRow | null = $state(null);
@@ -13,6 +14,24 @@
 
   let addingPeer = $state(false);
   let newPeerId = $state("");
+  let expiryAmount: number | null = $state(null);
+  let expiryUnitSecs: number = $state(86_400);
+
+  function openAddPeerForm() {
+    addingPeer = true;
+    newPeerId = "";
+    expiryAmount = null;
+  }
+
+  /** Returns the expiry in seconds, `null` for never, or throws on invalid input. */
+  function expiresInSecs(): number | null {
+    const n = expiryAmount;
+    if (n == null) return null;
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new Error("Expiry must be a positive whole number");
+    }
+    return n * expiryUnitSecs;
+  }
 
   async function loadRings() {
     error = null;
@@ -56,12 +75,17 @@
     if (!peer || !selected) return;
     error = null;
     try {
-      await invoke("ring_add", { ring: selected.name, peer });
+      const secs = expiresInSecs();
+      const args = secs === null
+        ? { ring: selected.name, peer }
+        : { ring: selected.name, peer, expiresInSecs: secs };
+      await invoke("ring_add", args);
       newPeerId = "";
+      expiryAmount = null;
       addingPeer = false;
       members = await invoke<PeerEntry[]>("ring_members", { ring: selected.name });
     } catch (e) {
-      error = String(e);
+      error = e instanceof Error ? e.message : String(e);
     }
   }
 
@@ -142,7 +166,7 @@
         </h2>
         {#if !selected.open}
           <button
-            onclick={() => { addingPeer = true; newPeerId = ""; }}
+            onclick={openAddPeerForm}
             class="rounded border border-amber-700/60 bg-amber-950/40 px-2.5 py-1 text-xs font-medium text-amber-300 transition-colors hover:border-amber-500"
           >Add peer</button>
         {/if}
@@ -158,6 +182,26 @@
             class="min-w-0 flex-1 rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-100 outline-none focus:border-amber-700"
             aria-label="Peer ID to add"
           />
+          <input
+            type="number"
+            min="1"
+            step="1"
+            placeholder="never"
+            title="Leave empty for a membership that never expires"
+            bind:value={expiryAmount}
+            onkeydown={(e) => e.key === "Enter" && addPeer()}
+            class="w-20 rounded border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-xs text-neutral-100 outline-none focus:border-amber-700"
+            aria-label="Expires after"
+          />
+          <select
+            bind:value={expiryUnitSecs}
+            class="rounded border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-xs text-neutral-300 outline-none focus:border-amber-700"
+            aria-label="Expiry unit"
+          >
+            {#each EXPIRY_UNITS as unit (unit.secs)}
+              <option value={unit.secs}>{unit.label}</option>
+            {/each}
+          </select>
           <button onclick={addPeer} class="rounded border border-amber-700/60 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-300 transition-colors hover:border-amber-500">Add</button>
           <button onclick={() => (addingPeer = false)} class="text-xs text-neutral-600 hover:text-neutral-400">✕</button>
         </div>
@@ -175,6 +219,9 @@
                   <span class="block truncate font-mono text-xs text-neutral-600" title={m.peer_id}>{m.peer_id}</span>
                 {:else}
                   <span class="block truncate font-mono text-sm text-neutral-400" title={m.peer_id}>{m.peer_id}</span>
+                {/if}
+                {#if m.expires_at}
+                  <span class="text-xs text-amber-600/80">expires in {formatRemaining(m.expires_at)}</span>
                 {/if}
               </div>
               <ConfirmButton label="Remove?" onConfirm={() => removePeer(m.peer_id)}>

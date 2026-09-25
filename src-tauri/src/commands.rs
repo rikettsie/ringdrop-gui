@@ -6,6 +6,7 @@
 //! events to the frontend via [`tauri::AppHandle::emit`].
 
 use std::path::PathBuf;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use ringdrop::daemon::protocol::{EventKind, Op};
 use serde::{Deserialize, Serialize};
@@ -75,6 +76,10 @@ pub struct PeerEntry {
     pub peer_id: String,
     /// Human-readable label, if one was set.
     pub nickname: Option<String>,
+    /// When the ring membership expires, in seconds since the Unix epoch.
+    /// Only set for expiring ring members.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<u64>,
 }
 
 /// One catalog-access grant.
@@ -286,13 +291,36 @@ pub async fn ring_members(
 }
 
 /// Adds `peer` to `ring`. Registers the peer in the address book if absent.
+///
+/// When `expires_in_secs` is set, the membership expires that many seconds
+/// from now; otherwise it never expires.
 #[tauri::command]
 pub async fn ring_add(
     state: State<'_, AppState>,
     ring: String,
     peer: String,
+    expires_in_secs: Option<u64>,
 ) -> Result<(), String> {
-    state.execute(Op::RingAdd { ring, peer }).await
+    let expires_at = expires_in_secs.map(unix_secs_after).transpose()?;
+    state
+        .execute(Op::RingAdd {
+            ring,
+            peer,
+            expires_at,
+        })
+        .await
+}
+
+fn unix_secs_after(secs: u64) -> Result<u64, String> {
+    if secs == 0 {
+        return Err("expiry must be in the future".into());
+    }
+    let at = SystemTime::now()
+        .checked_add(Duration::from_secs(secs))
+        .ok_or("expiry is too far in the future")?;
+    at.duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .map_err(|e| format!("system clock is before the Unix epoch: {e}"))
 }
 
 /// Removes `peer` from `ring`.
@@ -564,6 +592,34 @@ mod tests {
         ]);
         assert_eq!(entries[0].nickname, Some("alice".into()));
         assert_eq!(entries[1].nickname, None);
+    }
+
+    #[test]
+    fn collect_records_deserializes_ring_member_expiry() {
+        let entries: Vec<PeerEntry> = collect_records(vec![
+            rec(json!({"peer_id": "abc", "nickname": null, "expires_at": 1_800_000_000u64})),
+            rec(json!({"peer_id": "def", "nickname": null})),
+        ]);
+        assert_eq!(entries[0].expires_at, Some(1_800_000_000));
+        assert_eq!(entries[1].expires_at, None);
+    }
+
+    #[test]
+    fn unix_secs_after_adds_offset_to_current_time() {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let at = unix_secs_after(3_600).unwrap();
+        assert!(
+            (now + 3_600..=now + 3_601).contains(&at),
+            "got {at}, now {now}"
+        );
+    }
+
+    #[test]
+    fn unix_secs_after_rejects_zero() {
+        assert!(unix_secs_after(0).is_err());
     }
 
     #[test]

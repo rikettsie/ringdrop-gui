@@ -32,6 +32,8 @@ export interface RingRow {
 export interface PeerEntry {
   peer_id: string;
   nickname: string | null;
+  /** Ring membership expiry in Unix seconds; absent if it never expires. */
+  expires_at?: number;
 }
 
 /** One catalog-access grant. */

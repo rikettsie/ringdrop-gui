@@ -2896,9 +2896,9 @@ dependencies = [
 
 [[package]]
 name = "iroh-rings"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd2d4e3cf09a5f4c25ce825bddba3dfd4301ec44a6a6945e8904d8127ef3bb55"
+checksum = "558707c3cb7e923fe27e63ea74b2af01d372bbec13e7042e837af43ca092ffa9"
 dependencies = [
  "anyhow",
  "bao-tree",
@@ -4976,9 +4976,9 @@ dependencies = [
 
 [[package]]
 name = "ringdrop"
-version = "0.21.0"
+version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79137a221d20cd542abc5e02e320d53ed04a75d70842535fb4dfd1cdba435dcd"
+checksum = "8ab1be85fb6f5e100d348b640c7a0ac4acf83832e3c06b8300770caf268ad2ca"
 dependencies = [
  "anyhow",
  "bao-tree",

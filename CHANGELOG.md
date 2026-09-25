@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-09-25
+
+### Features
+
+- (**ring**) Support membership expiry when adding a peer
+
 ## [0.6.1] - 2026-09-22
 
 ### Refactoring

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2026-10-25
+
+### Bug Fixes
+
+- (**deps**) Bump tauri to 2.12 to fix missing .DirIcon in appimage
+
 ## [0.7.0] - 2026-09-25
 
 ### Features
